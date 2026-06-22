@@ -31,7 +31,6 @@ export interface Client {
   telefono?: string
   ultima_compra?: string
   producto?: string
-  dias_inactivo?: number
 }
 
 export interface TaskDraftContent {
