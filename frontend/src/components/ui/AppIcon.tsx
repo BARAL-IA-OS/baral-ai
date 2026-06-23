@@ -5,15 +5,19 @@ interface AppIconProps {
     | 'arrow'
     | 'bag'
     | 'bell'
+    | 'brain'
     | 'calendar'
     | 'campaign'
+    | 'check'
     | 'dashboard'
     | 'email'
+    | 'file'
     | 'hand'
     | 'logout'
     | 'rocket'
     | 'spark'
     | 'star'
+    | 'upload'
     | 'users'
   size?: number
 }
@@ -57,6 +61,13 @@ export function AppIcon({ name, size = 22 }: AppIconProps) {
         <path d="M10 21h4" />
       </>
     ),
+    brain: (
+      <>
+        <path d="M9.5 4.5A3 3 0 0 0 4 6a3.5 3.5 0 0 0 .7 6.8A4 4 0 0 0 9 19.5" />
+        <path d="M14.5 4.5A3 3 0 0 1 20 6a3.5 3.5 0 0 1-.7 6.8 4 4 0 0 1-4.3 6.7" />
+        <path d="M9 4v16M15 4v16M9 9H6.5M15 8h2.5M9 15H6M15 14h3" />
+      </>
+    ),
     calendar: (
       <>
         <rect x="3" y="5" width="18" height="16" rx="3" />
@@ -69,6 +80,7 @@ export function AppIcon({ name, size = 22 }: AppIconProps) {
         <path d="M17 10a4 4 0 0 0 0 4M6 14l1 6h4l-2-7" />
       </>
     ),
+    check: <path d="m5 12 4 4L19 6" />,
     dashboard: (
       <>
         <path d="m3 11 9-8 9 8" />
@@ -79,6 +91,12 @@ export function AppIcon({ name, size = 22 }: AppIconProps) {
       <>
         <rect x="3" y="5" width="18" height="14" rx="2" />
         <path d="m3 7 9 6 9-6" />
+      </>
+    ),
+    file: (
+      <>
+        <path d="M6 2h8l4 4v16H6z" />
+        <path d="M14 2v5h5M9 13h6M9 17h6" />
       </>
     ),
     hand: (
@@ -98,6 +116,12 @@ export function AppIcon({ name, size = 22 }: AppIconProps) {
     ),
     spark: <path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z" />,
     star: <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" />,
+    upload: (
+      <>
+        <path d="M12 16V4M7 9l5-5 5 5" />
+        <path d="M4 15v5h16v-5" />
+      </>
+    ),
     users: (
       <>
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
