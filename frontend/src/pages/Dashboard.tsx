@@ -12,10 +12,10 @@ const recipes = [
 
 export function Dashboard() {
   return (
-    <section className="page stack">
-      <div>
+    <section className="page dashboard-page">
+      <div className="dashboard-heading">
         <h1>Dashboard</h1>
-        <p>Recetas de accion para generar y enviar campanas con IA.</p>
+        <p>Recetas de acción para generar y enviar campañas con IA.</p>
       </div>
       <MetricsPanel />
       <section className="recipes-grid">
