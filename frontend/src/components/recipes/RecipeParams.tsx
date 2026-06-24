@@ -27,7 +27,7 @@ export function RecipeParams({ type }: RecipeParamsProps) {
   return (
     <div className="card stack">
       <label>
-        <span>Dias de referencia</span>
+        <span>Días de referencia</span>
         <input
           min={1}
           type="number"
