@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../ui/Button'
 import { saveBrandBrain } from '../../hooks/useBrandBrain'
 import type { BrandBrainInput } from '../../hooks/useBrandBrain'
@@ -58,6 +59,7 @@ const fields: Array<{
 ]
 
 export function BrandBrainForm() {
+  const navigate = useNavigate()
   const [form, setForm] = useState(initialForm)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -78,6 +80,7 @@ export function BrandBrainForm() {
         return
       }
       setMessage('Brand Brain guardado correctamente.')
+      navigate('/dashboard', { replace: true })
     } catch (error) {
       setMessage(`Error: ${error instanceof Error ? error.message : 'No se pudo guardar la información.'}`)
     } finally {

@@ -1,8 +1,30 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BrandBrainForm } from '../components/onboarding/BrandBrainForm'
 import { CSVUpload } from '../components/onboarding/CSVUpload'
 import { SetupProgress } from '../components/onboarding/SetupProgress'
+import { Spinner } from '../components/ui/Spinner'
+import { hasBrandBrain } from '../hooks/useBrandBrain'
 
 export function Onboarding() {
+  const navigate = useNavigate()
+  const [checking, setChecking] = useState(true)
+
+  useEffect(() => {
+    hasBrandBrain()
+      .then((exists) => {
+        if (exists) {
+          navigate('/dashboard', { replace: true })
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => setChecking(false))
+  }, [navigate])
+
+  if (checking) {
+    return <Spinner />
+  }
+
   return (
     <section className="page onboarding-page">
       <div className="onboarding-heading">

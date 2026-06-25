@@ -3,7 +3,7 @@ import type { BrandBrain } from '../types'
 
 export type BrandBrainInput = Omit<BrandBrain, 'id'>
 
-export async function saveBrandBrain(data: BrandBrainInput) {
+async function getCurrentUserId() {
   const {
     data: { user },
     error: userError,
@@ -17,17 +17,56 @@ export async function saveBrandBrain(data: BrandBrainInput) {
     throw new Error('No authenticated user found')
   }
 
-  return supabase.from('brand_brain').upsert({
+  return user.id
+}
+
+export async function saveBrandBrain(data: BrandBrainInput) {
+  const userId = await getCurrentUserId()
+  const payload = {
     ...data,
-    user_id: user.id,
     updated_at: new Date().toISOString(),
-  })
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from('brand_brain')
+    .select('id')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (existingError) {
+    throw existingError
+  }
+
+  if (existing) {
+    return supabase
+      .from('brand_brain')
+      .update(payload)
+      .eq('id', existing.id)
+      .select('id')
+      .single()
+  }
+
+  return supabase
+    .from('brand_brain')
+    .insert({
+      ...payload,
+      user_id: userId,
+    })
+    .select('id')
+    .single()
 }
 
 export async function getBrandBrain(): Promise<BrandBrain | null> {
+  const userId = await getCurrentUserId()
+
   const { data, error } = await supabase
     .from('brand_brain')
     .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
     .maybeSingle()
 
   if (error) {

@@ -37,6 +37,28 @@ function ProtectedRoutes() {
   )
 }
 
+function BrandBrainRequired() {
+  const [loading, setLoading] = useState(true)
+  const [exists, setExists] = useState(false)
+
+  useEffect(() => {
+    hasBrandBrain()
+      .then(setExists)
+      .catch(() => setExists(false))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return <Spinner />
+  }
+
+  if (!exists) {
+    return <Navigate to="/onboarding" replace />
+  }
+
+  return <Outlet />
+}
+
 function HomeRedirect() {
   const { user, loading } = useAuth()
   const [ready, setReady] = useState(false)
@@ -72,11 +94,13 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route element={<ProtectedRoutes />}>
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/recipe/:type" element={<Recipe />} />
-          <Route path="/preview/:taskId" element={<Preview />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/analytics" element={<Analytics />} />
+          <Route element={<BrandBrainRequired />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/recipe/:type" element={<Recipe />} />
+            <Route path="/preview/:taskId" element={<Preview />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/analytics" element={<Analytics />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
