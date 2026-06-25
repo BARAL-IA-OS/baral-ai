@@ -18,13 +18,20 @@ export function Analytics() {
   return (
     <section className="page stack">
       <div>
-        <h1>Analiticas</h1>
-        <p>KPIs reales del prototipo cuando el backend este disponible.</p>
+        <h1>Analíticas</h1>
+        <p>KPIs reales del prototipo cuando el backend esté disponible.</p>
+      </div>
+      <div className="pending-backend-banner">
+        <span>⏳</span>
+        <div>
+          <strong>Pendiente de backend</strong>
+          <p>Esta página consume <code>GET /api/analytics/summary</code>. Coordinar contrato con Omar/Saúl.</p>
+        </div>
       </div>
       {error ? <p>{error}</p> : null}
       <section className="metrics-grid">
         <Card>
-          <span>Campanas</span>
+          <span>Campañas</span>
           <strong>{summary?.total_tasks ?? 0}</strong>
         </Card>
         <Card>

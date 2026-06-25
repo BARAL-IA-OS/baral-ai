@@ -17,7 +17,9 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <img src={baralLogo} alt="Baral AI" />
+        <span className="sidebar-brand-mark">
+          <img src={baralLogo} alt="" />
+        </span>
       </div>
       <nav>
         {items.map((item) => (
@@ -27,6 +29,7 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <div className="sidebar-stars" aria-hidden="true" />
       <div className="sidebar-profile">
         <span className="sidebar-avatar">{initials}</span>
         <span className="sidebar-profile-copy">

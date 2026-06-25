@@ -3,9 +3,9 @@ import { MetricsPanel } from '../components/dashboard/MetricsPanel'
 import { RecentTasks } from '../components/dashboard/RecentTasks'
 
 const recipes = [
-  ['Reactivar clientes', 'Clientes inactivos segun dias sin compra.', 'reactivacion'],
+  ['Reactivar clientes', 'Clientes inactivos según días sin compra.', 'reactivacion'],
   ['Bienvenida', 'Primer contacto con propuesta de valor.', 'bienvenida'],
-  ['Post-venta', 'Seguimiento despues de una compra.', 'postventa'],
+  ['Post-venta', 'Seguimiento después de una compra.', 'postventa'],
   ['Lanzamiento', 'Email y copy para producto nuevo.', 'lanzamiento'],
   ['Propuesta express', 'Borrador comercial estructurado.', 'propuesta'],
 ] as const
