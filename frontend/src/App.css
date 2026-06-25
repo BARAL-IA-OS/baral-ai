@@ -1033,6 +1033,83 @@ textarea {
   font-size: 0.68rem;
 }
 
+/* CSV Upload – error */
+.csv-error {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: #b42318;
+  background: #fff0ee;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* CSV Upload – parse summary */
+.csv-summary {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #d0eade;
+  border-radius: 12px;
+  background: #f4fbf7;
+}
+
+.csv-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.csv-summary-header strong {
+  color: #13795b;
+  font-size: 0.82rem;
+}
+
+.csv-summary-header span {
+  color: #7a8599;
+  font-size: 0.72rem;
+}
+
+.csv-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.csv-col-tag {
+  padding: 4px 9px;
+  border-radius: 6px;
+  color: #504c6e;
+  background: #eef0f6;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.csv-col-matched {
+  color: #0d6949;
+  background: #d9f5e8;
+}
+
+.csv-match-note {
+  color: #13795b;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.csv-pending-note {
+  color: #8990a3;
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
+/* CSV Upload – drag-over state */
+.upload-box-dragover {
+  border-color: #7c4de8;
+  background: #f0eaff;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px rgba(108, 58, 237, 0.1);
+}
+
 .onboarding-tip {
   display: flex;
   gap: 13px;
@@ -1319,4 +1396,44 @@ textarea {
   .csv-card {
     padding: 21px 18px;
   }
+}
+
+/* ── Pending-backend banner ─────────────────────────────────────── */
+
+.pending-backend-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fffbeb, #fef9e7);
+}
+
+.pending-backend-banner > span {
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.pending-backend-banner strong {
+  display: block;
+  color: #92400e;
+  font-size: 0.82rem;
+  margin-bottom: 3px;
+}
+
+.pending-backend-banner p {
+  color: #a16207;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.pending-backend-banner code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(146, 64, 14, 0.08);
+  font-size: 0.74rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: #78350f;
 }

@@ -1045,13 +1045,25 @@ export function Login() {
                     <div style={styles.dividerLine} />
                   </div>
 
-                  {/* Social buttons */}
+                  {/* Social buttons – OAuth no implementado aún */}
                   <div style={styles.socialRow} className="login-social-row">
-                    <button type="button" style={styles.socialBtn} className="login-social-btn">
+                    <button
+                      type="button"
+                      style={{ ...styles.socialBtn, opacity: 0.5, cursor: 'not-allowed' }}
+                      className="login-social-btn"
+                      disabled
+                      title="Próximamente"
+                    >
                       <GoogleIcon />
                       Google
                     </button>
-                    <button type="button" style={styles.socialBtn} className="login-social-btn">
+                    <button
+                      type="button"
+                      style={{ ...styles.socialBtn, opacity: 0.5, cursor: 'not-allowed' }}
+                      className="login-social-btn"
+                      disabled
+                      title="Próximamente"
+                    >
                       <MicrosoftIcon />
                       Microsoft
                     </button>

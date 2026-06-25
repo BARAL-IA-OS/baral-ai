@@ -15,7 +15,7 @@ export function TaskList() {
   }
 
   if (tasks.length === 0) {
-    return <p>No hay campanas todavia.</p>
+    return <p>No hay campañas todavía.</p>
   }
 
   return (
