@@ -1,4 +1,12 @@
 from fastapi import APIRouter
 
-router = APIRouter()
+router = APIRouter(tags=["System"])
 
+@router.get("/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "service": "baral-ai-engine",
+        "environment": "local_mock",
+        "version": "1.0.0"
+    }
