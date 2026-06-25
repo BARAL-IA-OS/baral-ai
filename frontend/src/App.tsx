@@ -64,14 +64,28 @@ function HomeRedirect() {
   return <Navigate to={nextPath} replace />
 }
 
+function ProtectedOnboarding() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return <Spinner />
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  return <Onboarding />
+}
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/onboarding" element={<ProtectedOnboarding />} />
         <Route element={<ProtectedRoutes />}>
-          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/recipe/:type" element={<Recipe />} />
           <Route path="/preview/:taskId" element={<Preview />} />
