@@ -5,6 +5,25 @@ export type RecipeType =
   | 'lanzamiento'
   | 'propuesta'
 
+// Canales de salida. Email se ENVÍA (Resend). El resto, por ahora, solo se
+// genera y se previsualiza (publicación directa = fase posterior).
+export type ChannelType =
+  | 'email'
+  | 'whatsapp'
+  | 'instagram'
+  | 'facebook'
+  | 'tiktok'
+
+// Contenido de una pieza para preview por canal. El backend lo irá llenando;
+// hoy el Studio usa datos de ejemplo para mostrar los mockups.
+export interface SocialDraft {
+  channel: ChannelType
+  caption: string        // texto de la publicación / mensaje
+  hashtags?: string[]    // para redes
+  cta?: string
+  mediaAlt?: string      // descripción de la imagen/infografía generada
+}
+
 export type TaskStatus =
   | 'CREATED'
   | 'PROCESSING'

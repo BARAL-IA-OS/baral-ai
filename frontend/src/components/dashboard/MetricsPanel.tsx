@@ -1,11 +1,11 @@
 import { Card } from '../ui/Card'
-import { AppIcon } from '../ui/AppIcon'
+import { Megaphone, Mail, Zap, Star } from 'lucide-react'
 
 const metrics = [
-  { label: 'Campañas', value: '0', icon: 'campaign', tone: 'violet', line: 'metric-line-one' },
-  { label: 'Emails enviados', value: '0', icon: 'email', tone: 'indigo', line: 'metric-line-two' },
-  { label: 'Costo total', value: '$0.00', icon: 'spark', tone: 'pink', line: 'metric-line-three' },
-  { label: 'Score promedio', value: '-', icon: 'star', tone: 'blue', line: 'metric-line-four' },
+  { label: 'Campañas',      value: '0',     Icon: Megaphone, tone: 'violet', line: 'metric-line-one' },
+  { label: 'Emails enviados', value: '0',   Icon: Mail,      tone: 'indigo', line: 'metric-line-two' },
+  { label: 'Costo total',   value: '$0.00', Icon: Zap,       tone: 'pink',   line: 'metric-line-three' },
+  { label: 'Score promedio', value: '-',    Icon: Star,      tone: 'blue',   line: 'metric-line-four' },
 ] as const
 
 export function MetricsPanel() {
@@ -14,14 +14,14 @@ export function MetricsPanel() {
       {metrics.map((metric) => (
         <Card key={metric.label} className={`metric-card metric-${metric.tone}`}>
           <span className="metric-icon">
-            <AppIcon name={metric.icon} size={27} />
+            <metric.Icon size={18} strokeWidth={1.75} />
           </span>
           <span className="metric-copy">
             <span>{metric.label}</span>
             <strong>{metric.value}</strong>
           </span>
-          <svg className="metric-chart" viewBox="0 0 220 34" preserveAspectRatio="none" aria-hidden="true">
-            <path className={metric.line} d="M2 25 18 19 34 23 50 14 66 22 82 26 98 18 114 16 130 23 146 12 162 21 178 15 194 19 218 10" />
+          <svg className="metric-chart" viewBox="0 0 220 28" preserveAspectRatio="none" aria-hidden="true">
+            <path className={metric.line} d="M2 20 18 16 34 19 50 11 66 18 82 22 98 14 114 12 130 19 146 9 162 17 178 11 194 15 218 7" />
           </svg>
         </Card>
       ))}

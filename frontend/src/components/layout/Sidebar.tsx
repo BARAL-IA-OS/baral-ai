@@ -1,42 +1,75 @@
 import { NavLink } from 'react-router-dom'
+import {
+  LayoutDashboard,
+  Sparkles,
+  History,
+  BarChart3,
+  Settings,
+  Bell,
+  LogOut,
+  ChevronDown,
+} from 'lucide-react'
 import baralLogo from '../../assets/login/logo baral dark.png'
 import { useAuth } from '../../hooks/useAuth'
-import { AppIcon } from '../ui/AppIcon'
 
 const items = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/history', label: 'Historial', icon: 'calendar' },
-  { to: '/analytics', label: 'Analíticas', icon: 'analytics' },
+  { to: '/dashboard', label: 'Dashboard',  Icon: LayoutDashboard },
+  { to: '/studio',    label: 'Estudio',    Icon: Sparkles },
+  { to: '/history',   label: 'Historial',  Icon: History },
+  { to: '/analytics', label: 'Analíticas', Icon: BarChart3 },
 ] as const
 
 export function Sidebar() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const email = user?.email ?? 'Sin sesión'
   const initials = email.slice(0, 2).toUpperCase()
 
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <span className="sidebar-brand-mark">
-          <img src={baralLogo} alt="" />
-        </span>
+        <img src={baralLogo} alt="Baral AI" />
       </div>
+
       <nav>
-        {items.map((item) => (
-          <NavLink key={item.to} to={item.to}>
-            <AppIcon name={item.icon} />
-            {item.label}
+        {items.map(({ to, label, Icon }) => (
+          <NavLink key={to} to={to}>
+            <Icon size={16} strokeWidth={1.75} />
+            {label}
           </NavLink>
         ))}
       </nav>
+
+      <div className="sidebar-divider" />
+
+      <div className="sidebar-section-label">CUENTA</div>
+      <nav className="sidebar-secondary-nav">
+        <button type="button" className="sidebar-action">
+          <Bell size={16} strokeWidth={1.75} />
+          Notificaciones
+          <i className="sidebar-action-dot" />
+        </button>
+        <span className="sidebar-link-disabled" aria-disabled="true">
+          <Settings size={16} strokeWidth={1.75} />
+          Configuración
+          <small>Pronto</small>
+        </span>
+        {user ? (
+          <button type="button" className="sidebar-action sidebar-action-danger" onClick={() => void logout()}>
+            <LogOut size={16} strokeWidth={1.75} />
+            Cerrar sesión
+          </button>
+        ) : null}
+      </nav>
+
       <div className="sidebar-stars" aria-hidden="true" />
+
       <div className="sidebar-profile">
         <span className="sidebar-avatar">{initials}</span>
         <span className="sidebar-profile-copy">
           <strong>{email}</strong>
           <small>Prototipo local</small>
         </span>
-        <span className="sidebar-chevron">⌄</span>
+        <ChevronDown size={14} className="sidebar-chevron" />
       </div>
     </aside>
   )

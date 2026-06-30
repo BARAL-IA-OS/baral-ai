@@ -1,14 +1,19 @@
 # Baral AI - Fase 1
 
-Prototipo local de Baral AI: una plataforma de accion para configurar una empresa, cargar clientes, elegir recetas de marketing con IA, revisar contenido generado y ejecutar campanas por email.
+Prototipo local de Baral AI: una plataforma de accion para configurar una empresa, cargar clientes, generar contenido de marketing con IA (email + redes), revisar una vista previa realista y ejecutar campanas por email.
+
+> Documentacion completa en `doc/`:
+> - `doc/PLAN_GENERAL.md` - vision, arquitectura, schema, cronograma.
+> - `doc/FEATURES_INDEX.md` - indice de features (incluye Seccion 7: multicanal + Estudio).
+> - `doc/DISTRIBUCION_TAREAS.md` - **tareas asignadas (empezar por aqui)**.
 
 ## Equipo y Responsables
 
+
 | Integrante | Rol | Responsabilidades |
 |---|---|---|
-| Omar Quispe | Tech Lead & Full Stack | Arquitectura, Supabase, Auth, Brand Brain, contratos, code review |
-| Jhamil | Frontend Developer | UI/UX, onboarding, dashboard, recetas, preview, historial, analiticas |
-| Saul | Backend & IA Developer | FastAPI, Supabase backend, CSV parser, agentes IA, Resend, analytics |
+| Omar Quispe | Tech Lead & Full Stack | Arquitectura, Supabase, Auth, Brand Brain, todo el backend FastAPI, pipeline de IA, generacion de contenido, Resend, contratos, code review |
+| Jhamil | Frontend Developer | UI/UX, onboarding, dashboard, recetas, Estudio multicanal, preview, historial, analiticas; integra endpoints conforme Omar los entrega |
 
 ## Stack Actual
 
@@ -16,11 +21,13 @@ Prototipo local de Baral AI: una plataforma de accion para configurar una empres
 |---|---|
 | Frontend | React 19 + Vite 8 + TypeScript 6 |
 | Routing | React Router |
-| Estilos | CSS vanilla |
+| Estilos | CSS vanilla (modo oscuro) |
+| Iconos | lucide-react |
 | Auth | Supabase Auth |
 | Base de datos | Supabase PostgreSQL + RLS |
 | Backend | FastAPI + Python |
-| IA | OpenAI principal, Claude fallback |
+| IA texto | OpenAI principal, Claude fallback |
+| IA imagen | Modelo de imagen (gpt-image-1 / DALL-E / Flux) - pendiente |
 | Email | Resend |
 | Deploy | Vercel frontend, Railway/backend pendiente |
 
@@ -28,9 +35,14 @@ Prototipo local de Baral AI: una plataforma de accion para configurar una empres
 
 ```text
 baral-ai/
++-- doc/                         # PLAN_GENERAL, FEATURES_INDEX, DISTRIBUCION_TAREAS
 +-- frontend/
 |   +-- src/components/
-|   +-- src/pages/
+|   |   +-- layout/              # Sidebar (con seccion CUENTA), Layout (sin TopBar)
+|   |   +-- dashboard/           # ActionCard, MetricsPanel, RecentTasks
+|   |   +-- preview/             # ChannelMocks, SocialPreview (Estudio)
+|   |   +-- onboarding/ ui/ recipes/ history/
+|   +-- src/pages/              # Login, Onboarding, Dashboard, Recipe, Preview, History, Analytics, Studio
 |   +-- src/hooks/
 |   +-- src/lib/
 |   +-- src/types/
@@ -43,62 +55,53 @@ baral-ai/
 
 ## Estado Actual
 
-### Omar - Tech Lead
+### Omar - Tech Lead & Full Stack
 
-- [x] Proyecto Supabase creado.
-- [x] Variables frontend configuradas en `.env.local`.
-- [x] Variables backend compartidas con Saul para `.env`.
-- [x] Tablas creadas: `brand_brain`, `clients`, `tasks`.
-- [x] RLS activado en tablas principales.
-- [x] Auth por email habilitado.
-- [x] Frontend conectado a Supabase.
-- [x] Tipos base creados en `frontend/src/types/index.ts`.
-- [x] API wrapper base creado en `frontend/src/lib/api.ts`.
-- [x] `brand_brain.user_id` limpiado para evitar duplicados.
-- [x] Restriccion unica `brand_brain_user_id_unique` preparada/validada en Supabase.
-- [x] Onboarding redirige a dashboard si Brand Brain ya existe.
-- [x] Guardado de Brand Brain actualiza el registro existente.
-- [ ] Probar flujo completo Auth -> Brand Brain -> Dashboard en limpio.
-- [ ] Documentar contratos definitivos con Saul cuando existan endpoints reales.
+Hecho:
+
+- [x] Proyecto Supabase creado, variables frontend en `.env.local`.
+- [x] Tablas `brand_brain`, `clients`, `tasks` con RLS y politicas por `auth.uid()`.
+- [x] Auth por email habilitado; frontend conectado a Supabase.
+- [x] Tipos base en `frontend/src/types/index.ts` (+ `ChannelType`, `SocialDraft`).
+- [x] API wrapper base en `frontend/src/lib/api.ts`.
+- [x] `brand_brain.user_id` unico; onboarding hace upsert (no duplica).
+
+Pendiente (backend reasignado de Saul):
+
+- [ ] `GET /health`.
+- [ ] Verificacion JWT de Supabase + conexion con `SUPABASE_SERVICE_KEY`.
+- [ ] `POST /api/onboarding/import-clients` (parser CSV).
+- [ ] `GET /api/tasks`, `GET /api/analytics/summary`.
+- [ ] Pipeline de 3 agentes (Orquestador, Copywriter, Revisor) + prompts.
+- [ ] `POST /api/recipes/run`.
+- [ ] `email_service.py` con Resend + `POST /api/tasks/{id}/approve`.
+- [ ] `POST /api/content/generate` (texto + imagen por canal) para el Estudio.
+- [ ] Modelo de imagen para imagenes/infografias (sin video IA en esta fase).
 - [ ] Agregar `website_url` opcional a Brand Brain.
-- [ ] Coordinar endpoint futuro de analisis de URL con Saul.
 
 ### Jhamil - Frontend
 
-- [x] Login visual implementado.
-- [x] Sidebar y layout base implementados.
-- [x] Dashboard visual con cards y metricas base.
-- [x] Onboarding visual implementado.
-- [x] Formulario Brand Brain integrado visualmente.
-- [x] CSV upload con drag/drop y preview basico.
+Hecho:
+
+- [x] Login, sidebar y layout base.
+- [x] Onboarding visual + formulario Brand Brain + CSV upload con drag/drop y preview.
 - [x] Paginas base: Dashboard, Onboarding, Recipe, Preview, History, Analytics.
-- [x] `npm.cmd run lint` pasa.
-- [x] `npm.cmd run build` pasa.
-- [ ] Corregir textos con encoding roto si aparecen en UI.
-- [ ] Ocultar o deshabilitar botones OAuth si no se implementan.
-- [ ] Conectar CSV upload a backend cuando Saul entregue endpoint.
-- [ ] Conectar historial y analytics a endpoints reales.
+- [x] Rediseno a modo oscuro + iconos lucide-react.
+- [x] Sidebar: items Dashboard / Estudio / Historial / Analiticas + seccion CUENTA (Notificaciones, Configuracion, Cerrar sesion). TopBar eliminado.
+- [x] Estudio (`/studio`): prompt + lista "Mis campanas" (scroll propio) + preview celular full-height.
+- [x] Mockups de preview por canal: Email, WhatsApp, Instagram, Facebook, TikTok (selector dropdown).
+- [x] `npm.cmd run lint` y `npm.cmd run build` pasan.
+
+Pendiente:
+
+- [ ] Conectar CSV upload, recetas, preview, historial y analytics a endpoints reales.
+- [ ] Cargar Brand Brain real en los mockups (hoy usan datos de ejemplo "Studio Foto").
+- [ ] Renderizar la imagen real generada en el preview (hoy placeholder).
+- [ ] Conectar "Generar campana" a `POST /api/content/generate`.
+- [ ] Agrupar el Dashboard en las 2 familias (Mensajes a clientes / Contenido para redes).
 - [ ] Pulir estados vacios, errores y loading.
 
-### Saul - Backend e IA
-
-- [x] Carpeta backend creada.
-- [x] Estructura base creada: `routers`, `services`, `models`, `prompts`.
-- [x] FastAPI inicial con CORS.
-- [x] Dependencias base agregadas.
-- [x] `.env` backend preparado localmente.
-- [ ] Implementar `GET /health`.
-- [ ] Actualizar README del backend con setup real.
-- [ ] Implementar verificacion JWT de Supabase.
-- [ ] Conectar backend a Supabase usando `SUPABASE_SERVICE_KEY`.
-- [ ] Implementar `POST /api/onboarding/import-clients`.
-- [ ] Implementar `POST /api/recipes/run`.
-- [ ] Implementar `GET /api/tasks`.
-- [ ] Implementar `POST /api/tasks/{id}/approve`.
-- [ ] Implementar `GET /api/analytics/summary`.
-- [ ] Implementar pipeline de 3 agentes.
-- [ ] Implementar envio real con Resend.
-- [ ] Implementar endpoint futuro `POST /api/brand/analyze-url`.
+> Detalle accionable y orden de trabajo en `doc/DISTRIBUCION_TAREAS.md`.
 
 ## Contratos Frontend/Backend
 
@@ -111,6 +114,8 @@ frontend/src/types/index.ts
 Contratos actuales:
 
 - `RecipeType`
+- `ChannelType`
+- `SocialDraft`
 - `TaskStatus`
 - `BrandBrain`
 - `Client`
@@ -128,6 +133,10 @@ POST /api/recipes/run
 GET  /api/tasks
 POST /api/tasks/{taskId}/approve
 GET  /api/analytics/summary
+POST /api/content/generate          # texto + imagen por canal (Estudio)
+POST /api/strategies                # Feature A: Mis Estrategias (Sprint 2)
+GET  /api/strategies
+DELETE /api/strategies/{id}
 ```
 
 ## Variables de Entorno
@@ -218,6 +227,7 @@ Tablas actuales:
 - [x] `brand_brain`
 - [x] `clients`
 - [x] `tasks`
+- [ ] `saved_strategies` (Feature A, Sprint 2)
 
 Seguridad:
 
@@ -236,13 +246,13 @@ HAVING COUNT(*) > 1;
 
 ## Pendientes Prioritarios
 
-- [ ] Saul: cerrar `GET /health`.
-- [ ] Saul: entregar endpoints mock para desbloquear integracion.
-- [ ] Omar: validar contratos contra respuestas reales del backend.
-- [ ] Jhamil: conectar UI a endpoints reales.
+- [ ] Omar: cerrar `GET /health` + JWT + conexion Supabase.
+- [ ] Omar: entregar endpoints (import-clients, tasks, analytics) para desbloquear integracion.
+- [ ] Omar: pipeline de IA + `POST /api/recipes/run`.
+- [ ] Omar: Resend + `POST /api/tasks/{id}/approve`.
+- [ ] Omar: `POST /api/content/generate` + modelo de imagen (Estudio).
+- [ ] Jhamil: conectar UI a endpoints reales conforme se entreguen.
 - [ ] Omar/Jhamil: probar Brand Brain guardado en una cuenta nueva.
-- [ ] Omar/Saul: definir contrato de CSV import.
-- [ ] Omar/Saul: definir `website_url` y analisis automatico de pagina.
 
 ## Idea Propuesta: Website URL
 
@@ -272,6 +282,7 @@ Implementacion recomendada:
 - [ ] Usuario puede subir clientes CSV.
 - [ ] Dashboard muestra recetas funcionales.
 - [ ] Receta genera preview con IA.
+- [ ] Estudio genera contenido multicanal con preview por red.
 - [ ] Usuario aprueba envio.
 - [ ] Resend envia emails reales.
 - [ ] Historial muestra tareas.

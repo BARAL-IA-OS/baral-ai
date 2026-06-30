@@ -18,6 +18,7 @@ import { Login } from './pages/Login'
 import { Onboarding } from './pages/Onboarding'
 import { Preview } from './pages/Preview'
 import { Recipe } from './pages/Recipe'
+import { Studio } from './pages/Studio'
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth()
@@ -96,6 +97,7 @@ function App() {
           <Route path="/onboarding" element={<Onboarding />} />
           <Route element={<BrandBrainRequired />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/studio" element={<Studio />} />
             <Route path="/recipe/:type" element={<Recipe />} />
             <Route path="/preview/:taskId" element={<Preview />} />
             <Route path="/history" element={<History />} />
