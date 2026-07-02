@@ -19,6 +19,8 @@ ANTHROPIC_MODEL = "claude-haiku-4-5"
 _PRICING = {
     OPENAI_MODEL: (0.15, 0.60),
     ANTHROPIC_MODEL: (1.00, 5.00),
+    # DeepSeek (solo pruebas) — precio aproximado para el log de costo.
+    config.DEEPSEEK_MODEL: (0.28, 1.10),
 }
 
 
@@ -59,8 +61,14 @@ def _extract_json(text: str) -> dict:
 class LLMService:
     _openai: object = field(default=None, init=False)
     _anthropic: object = field(default=None, init=False)
+    _deepseek: object = field(default=None, init=False)
 
     def __post_init__(self):
+        # DeepSeek es solo para pruebas (compatible con el SDK de OpenAI).
+        if config.DEEPSEEK_API_KEY:
+            from openai import OpenAI
+
+            self._deepseek = OpenAI(api_key=config.DEEPSEEK_API_KEY, base_url=config.DEEPSEEK_BASE_URL)
         if config.OPENAI_API_KEY:
             from openai import OpenAI
 
@@ -72,15 +80,26 @@ class LLMService:
 
     @property
     def available(self) -> bool:
-        return bool(self._openai or self._anthropic)
+        return bool(self._deepseek or self._openai or self._anthropic)
 
     def complete_json(self, system: str, user: str, temperature: float = 0.3, max_tokens: int = 1024) -> LLMResult:
-        """Devuelve JSON parseado + uso. Intenta OpenAI y cae a Anthropic."""
+        """Devuelve JSON parseado + uso.
+
+        Orden: DeepSeek (solo pruebas, si esta seteado) -> OpenAI -> Anthropic.
+        El plan real es OpenAI primario + Anthropic fallback; DeepSeek solo se
+        antepone cuando su key esta presente para no gastar en pruebas.
+        """
         errors = []
+
+        if self._deepseek is not None:
+            try:
+                return self._openai_compatible_json(self._deepseek, config.DEEPSEEK_MODEL, system, user, temperature, max_tokens)
+            except Exception as exc:
+                errors.append(f"deepseek: {exc}")
 
         if self._openai is not None:
             try:
-                return self._openai_json(system, user, temperature, max_tokens)
+                return self._openai_compatible_json(self._openai, OPENAI_MODEL, system, user, temperature, max_tokens)
             except Exception as exc:  # 429/500/parseo/red -> intentar fallback
                 errors.append(f"openai: {exc}")
 
@@ -92,9 +111,11 @@ class LLMService:
 
         raise LLMUnavailable("; ".join(errors) or "No hay API keys de IA configuradas")
 
-    def _openai_json(self, system, user, temperature, max_tokens) -> LLMResult:
-        resp = self._openai.chat.completions.create(
-            model=OPENAI_MODEL,
+    def _openai_compatible_json(self, client, model, system, user, temperature, max_tokens) -> LLMResult:
+        """Llamada JSON para clientes compatibles con OpenAI (OpenAI y DeepSeek)."""
+        label = "deepseek" if client is self._deepseek else "openai"
+        resp = client.chat.completions.create(
+            model=model,
             temperature=temperature,
             max_tokens=max_tokens,
             response_format={"type": "json_object"},
@@ -105,8 +126,9 @@ class LLMService:
         )
         data = _extract_json(resp.choices[0].message.content)
         usage = resp.usage
-        cost = _cost(OPENAI_MODEL, usage.prompt_tokens, usage.completion_tokens)
-        return LLMResult(data, usage.total_tokens, cost, f"openai:{OPENAI_MODEL}")
+        price_key = model if model in _PRICING else OPENAI_MODEL
+        cost = _cost(price_key, usage.prompt_tokens, usage.completion_tokens)
+        return LLMResult(data, usage.total_tokens, cost, f"{label}:{model}")
 
     def _anthropic_json(self, system, user, temperature, max_tokens) -> LLMResult:
         msg = self._anthropic.messages.create(

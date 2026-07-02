@@ -78,6 +78,7 @@
 > **Sin API keys aun:** el pipeline usa un fallback determinista local (`provider: "stub"`, costo 0) para que el flujo funcione. Al setear `OPENAI_API_KEY`/`ANTHROPIC_API_KEY` en `backend/.env`, usa IA real automaticamente.
 > Probado contra Supabase real: filtro de clientes, revisor de prohibiciones, y persistencia de `tasks` E2E OK.
 > Dependencias uv agregadas: `openai`, `anthropic`.
+> **Proveedor de PRUEBAS (DeepSeek):** si `DEEPSEEK_API_KEY` esta en `backend/.env`, el pipeline lo usa primero (compatible con el SDK de OpenAI, `base_url=https://api.deepseek.com`) para no gastar en OpenAI/Anthropic durante desarrollo. NO cambia el plan real (OpenAI primario + Anthropic fallback): con la key vacia, ese orden vuelve a aplicar. Probado E2E con IA real (`deepseek-chat`): borrador en tono de marca, score 9, ~$0.0004/tarea.
 
 ### Prioridad 4 — Backend: Ejecucion Real
 - [ ] `email_service.py` — integrar Resend API para envio real de emails

@@ -175,6 +175,11 @@ OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 RESEND_API_KEY=
 FRONTEND_URL=http://localhost:5173
+
+# Solo PRUEBAS (opcional): DeepSeek, compatible con el SDK de OpenAI.
+# Si esta seteada, el pipeline la usa primero; no cambia el plan real (OpenAI+Anthropic).
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-chat
 ```
 
 Nunca subir `.env`, `.env.local`, `.venv`, `__pycache__` ni `*.pyc`.
