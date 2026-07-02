@@ -73,12 +73,12 @@ Hecho:
 - [x] Pipeline de 3 agentes (`llm_service.py`, `agent_pipeline.py`, prompts) + `POST /api/recipes/run`.
       OpenAI `gpt-4o-mini` -> fallback Claude Haiku 4.5; fallback determinista sin keys.
 - [x] `email_service.py` (Resend) + `POST /api/tasks/{id}/approve` — envio real, probado E2E.
+- [x] `POST /api/content/generate` (Estudio) — texto por canal desde prompt + Brand Brain (una sola llamada LLM). Contrato tipado listo en `api.ts` (`generateContent`).
 
 **Backend Fase 1 (Prioridades 1-4): COMPLETO.**
 
 Pendiente:
-- [ ] `POST /api/content/generate` (texto + imagen por canal) para el Estudio.
-- [ ] Modelo de imagen para imagenes/infografias (sin video IA en esta fase).
+- [ ] Modelo de imagen para el Estudio (hoy `content/generate` devuelve `media_alt`, la descripcion; falta generar la imagen).
 - [ ] Agregar `website_url` opcional a Brand Brain.
 - [ ] Verificar un dominio en Resend para enviar a clientes reales (hoy solo entrega al correo de la cuenta).
 - [ ] Desplegar backend + integrar con el frontend.
@@ -148,7 +148,7 @@ GET  /api/tasks
 GET  /api/tasks/{taskId}             # detalle (para el Preview)
 POST /api/tasks/{taskId}/approve     # acepta draft_content editado (Human Gate)
 GET  /api/analytics/summary
-POST /api/content/generate          # texto + imagen por canal (Estudio) — PENDIENTE
+POST /api/content/generate          # texto por canal (Estudio) — LISTO (imagen pendiente)
 POST /api/strategies                # Feature A: Mis Estrategias (Sprint 2) — PENDIENTE
 GET  /api/strategies
 DELETE /api/strategies/{id}

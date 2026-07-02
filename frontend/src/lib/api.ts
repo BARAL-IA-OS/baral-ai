@@ -2,6 +2,8 @@ import { supabase } from './supabase'
 import type {
   AnalyticsSummary,
   ApproveTaskResponse,
+  GenerateContentRequest,
+  GenerateContentResponse,
   ImportClientsResponse,
   RunRecipeRequest,
   RunRecipeResponse,
@@ -68,6 +70,17 @@ export function approveTask(
 
 export function getAnalytics(): Promise<AnalyticsSummary> {
   return request('/api/analytics/summary')
+}
+
+// --- Estudio: generación de contenido multicanal ---
+
+export function generateContent(
+  body: GenerateContentRequest,
+): Promise<GenerateContentResponse> {
+  return request('/api/content/generate', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
 }
 
 // --- Onboarding: importar clientes desde CSV (multipart) ---

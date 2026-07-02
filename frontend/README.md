@@ -59,6 +59,7 @@ y están alineadas con el backend real:
 | `getTask(id)` | `GET /api/tasks/{id}` | `Task` (detalle para el Preview) |
 | `approveTask(id, draft?)` | `POST /api/tasks/{id}/approve` | `{ status, emails_sent, emails_failed, errors }` |
 | `getAnalytics()` | `GET /api/analytics/summary` | `AnalyticsSummary` |
+| `generateContent({ prompt, channels? })` | `POST /api/content/generate` | `{ items: ContentItem[], tokens_used, cost_usd }` — Estudio |
 
 `approveTask` acepta el draft editado (Human Gate): si se pasa, el backend lo persiste y envía eso.
 
