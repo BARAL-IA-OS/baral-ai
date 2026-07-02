@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Card } from '../components/ui/Card'
 import { Spinner } from '../components/ui/Spinner'
-import { getAnalytics } from '../lib/api'
+import { getAnalytics, parseApiError } from '../lib/api'
+import { Inbox } from 'lucide-react'
 import type { AnalyticsSummary } from '../types'
 
 export function Analytics() {
@@ -12,13 +14,11 @@ export function Analytics() {
   useEffect(() => {
     getAnalytics()
       .then(setSummary)
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : 'Error cargando KPIs'),
-      )
+      .catch((err: unknown) => setError(parseApiError(err)))
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <section className="page"><Spinner /></section>
+  if (loading) return <section className="page"><Spinner label="Cargando analíticas…" /></section>
 
   return (
     <section className="page stack">
@@ -26,7 +26,19 @@ export function Analytics() {
         <h1>Analíticas</h1>
         <p>KPIs del pipeline de marketing.</p>
       </div>
-      {error ? <p className="csv-error">⚠ {error}</p> : null}
+      {error && <div className="error-banner">⚠ {error}</div>}
+
+      {summary && summary.total_tasks === 0 && !error && (
+        <div className="empty-state">
+          <span className="empty-state-icon">
+            <Inbox size={24} strokeWidth={1.5} />
+          </span>
+          <strong>Aún no hay datos</strong>
+          <p>Las métricas se calcularán automáticamente cuando ejecutes tu primera campaña.</p>
+          <Link to="/dashboard">Ir al Dashboard →</Link>
+        </div>
+      )}
+
       <section className="metrics-grid">
         <Card>
           <span>Campañas</span>
@@ -48,4 +60,5 @@ export function Analytics() {
     </section>
   )
 }
+
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { getTask } from '../lib/api'
+import { getTask, parseApiError } from '../lib/api'
 import type { Task } from '../types'
 
 export function useTask(taskId: string | undefined) {
@@ -15,7 +15,7 @@ export function useTask(taskId: string | undefined) {
       const data = await getTask(taskId)
       setTask(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar los detalles de la campaña.')
+      setError(parseApiError(err))
     } finally {
       setLoading(false)
     }
@@ -40,7 +40,7 @@ export function useTask(taskId: string | undefined) {
       })
       .catch((err: unknown) => {
         if (active) {
-          setError(err instanceof Error ? err.message : 'Error al cargar los detalles de la campaña.')
+          setError(parseApiError(err))
         }
       })
       .finally(() => {

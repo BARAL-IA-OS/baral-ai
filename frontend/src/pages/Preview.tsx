@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useTask } from '../hooks/useTask'
-import { approveTask } from '../lib/api'
+import { approveTask, parseApiError } from '../lib/api'
 import { TaskStatusBadge } from '../components/history/TaskStatusBadge'
 import { Spinner } from '../components/ui/Spinner'
 import type { TaskDraftContent, TaskStatus } from '../types'
@@ -39,7 +39,7 @@ export function Preview() {
         void refetch()
       }
     } catch (err) {
-      setApproveMsg(err instanceof Error ? err.message : 'Error al aprobar')
+      setApproveMsg(parseApiError(err))
     } finally {
       setApproving(false)
     }
@@ -47,13 +47,13 @@ export function Preview() {
 
   /* ── Loading & error states ─────────────────────── */
 
-  if (loading) return <section className="page"><Spinner /></section>
+  if (loading) return <section className="page"><Spinner label="Cargando campaña…" /></section>
 
   if (error || !task) {
     return (
       <section className="page stack">
         <Link to="/history">← Historial</Link>
-        <p className="csv-error">⚠ {error ?? 'Campaña no encontrada.'}</p>
+        <div className="error-banner">⚠ {error ?? 'Campaña no encontrada.'}</div>
       </section>
     )
   }

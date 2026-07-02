@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Inbox } from 'lucide-react'
 import { useTasks } from '../../hooks/useTasks'
 import { Card } from '../ui/Card'
 import { Spinner } from '../ui/Spinner'
@@ -8,15 +9,24 @@ export function TaskList() {
   const { tasks, loading, error } = useTasks()
 
   if (loading) {
-    return <Spinner />
+    return <Spinner label="Cargando historial…" />
   }
 
   if (error) {
-    return <p className="csv-error">⚠ {error}</p>
+    return <div className="error-banner">⚠ {error}</div>
   }
 
   if (tasks.length === 0) {
-    return <p>No hay campañas todavía.</p>
+    return (
+      <div className="empty-state">
+        <span className="empty-state-icon">
+          <Inbox size={24} strokeWidth={1.5} />
+        </span>
+        <strong>No hay campañas todavía</strong>
+        <p>Ejecuta tu primera receta para ver el historial de campañas generadas por la IA.</p>
+        <Link to="/dashboard">Ir al Dashboard →</Link>
+      </div>
+    )
   }
 
   return (
@@ -38,4 +48,5 @@ export function TaskList() {
     </section>
   )
 }
+
 
