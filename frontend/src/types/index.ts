@@ -118,3 +118,12 @@ export interface AnalyticsSummary {
   total_cost_usd: number
   average_agent_score: number
 }
+
+export interface RegenerateTaskResponse {
+  success: boolean
+  task_id: string
+  draft_content: TaskDraftContent
+  cost_usd: number
+  agent_score: number
+}
+

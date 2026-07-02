@@ -24,6 +24,12 @@ class ApproveRequest(BaseModel):
     draft_content: DraftContentIn | None = None
 
 
+class RegenerateRequest(BaseModel):
+    field: str
+    current_draft: DraftContentIn
+
+
+
 @router.get("/tasks")
 async def get_tasks(limit: int = 20, user: CurrentUser = Depends(get_current_user)):
     """Lista las tareas/campanas del usuario autenticado (filtrado por user_id del JWT)."""
@@ -115,3 +121,72 @@ async def approve_task(
         "provider": report.provider,
         "errors": report.errors,
     }
+
+
+@router.post("/tasks/{task_id}/regenerate")
+async def regenerate_task_field(
+    task_id: str,
+    req: RegenerateRequest,
+    user: CurrentUser = Depends(get_current_user)
+):
+    """Regenera un campo especifico del email con IA sin perder las otras modificaciones."""
+    if req.field not in ("asunto", "saludo", "cuerpo", "cta"):
+        raise HTTPException(status_code=400, detail=f"Campo invalido para regenerar: {req.field}")
+
+    sb = get_supabase()
+
+    # Buscar la tarea original del usuario
+    res = sb.table("tasks").select("*").eq("id", task_id).eq("user_id", user.id).limit(1).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    task = res.data[0]
+
+    if task["status"] not in ("PENDING_APPROVAL", "FAILED"):
+        raise HTTPException(status_code=400, detail="Solo se pueden regenerar tareas pendientes de aprobacion")
+
+    # Brand Brain del usuario
+    brand_res = sb.table("brand_brain").select("*").eq("user_id", user.id).limit(1).execute()
+    if not brand_res.data:
+        raise HTTPException(status_code=400, detail="Brand Brain no configurado")
+    brand = brand_res.data[0]
+
+    # Base de clientes del usuario
+    clients_res = sb.table("clients").select("*").eq("user_id", user.id).execute()
+    clients = clients_res.data or []
+
+    # Correr el pipeline para obtener una nueva sugerencia
+    try:
+        from services.agent_pipeline import run_pipeline
+        result = run_pipeline(task["recipe_type"], task["params"], brand, clients)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error en el pipeline de IA al regenerar: {exc}")
+
+    # Reemplazar solo el campo solicitado en el borrador provisto por el usuario
+    new_draft = {
+        "asunto": req.current_draft.asunto,
+        "saludo": req.current_draft.saludo,
+        "cuerpo": req.current_draft.cuerpo,
+        "cta": req.current_draft.cta
+    }
+    new_draft[req.field] = result["draft_content"].get(req.field, "")
+
+    # Sumar costo y tokens acumulados
+    new_cost = round(float(task.get("cost_usd") or 0) + float(result.get("cost_usd") or 0), 6)
+    new_tokens = int(task.get("tokens_used") or 0) + int(result.get("tokens_used") or 0)
+
+    # Actualizar la tarea en Supabase
+    sb.table("tasks").update({
+        "draft_content": new_draft,
+        "cost_usd": new_cost,
+        "tokens_used": new_tokens,
+        "agent_score": result["agent_score"]
+    }).eq("id", task_id).execute()
+
+    return {
+        "success": True,
+        "task_id": task_id,
+        "draft_content": new_draft,
+        "cost_usd": new_cost,
+        "agent_score": result["agent_score"]
+    }
+

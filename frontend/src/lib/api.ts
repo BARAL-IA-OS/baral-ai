@@ -7,6 +7,7 @@ import type {
   RunRecipeResponse,
   Task,
   TaskDraftContent,
+  RegenerateTaskResponse,
 } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -89,6 +90,17 @@ export async function importClients(file: File): Promise<ImportClientsResponse> 
   }
 
   return res.json() as Promise<ImportClientsResponse>
+}
+
+export function regenerateTaskField(
+  taskId: string,
+  field: 'asunto' | 'saludo' | 'cuerpo' | 'cta',
+  currentDraft: TaskDraftContent
+): Promise<RegenerateTaskResponse> {
+  return request(`/api/tasks/${taskId}/regenerate`, {
+    method: 'POST',
+    body: JSON.stringify({ field, current_draft: currentDraft }),
+  })
 }
 
 // --- Utilidad: parsear errores de la API ---

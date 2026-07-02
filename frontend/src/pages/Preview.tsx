@@ -1,9 +1,10 @@
 import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useTask } from '../hooks/useTask'
-import { approveTask, parseApiError } from '../lib/api'
+import { approveTask, parseApiError, regenerateTaskField } from '../lib/api'
 import { TaskStatusBadge } from '../components/history/TaskStatusBadge'
 import { Spinner } from '../components/ui/Spinner'
+import { Sparkles, RefreshCw, CheckCircle, ArrowRight } from 'lucide-react'
 import type { TaskDraftContent, TaskStatus } from '../types'
 
 export function Preview() {
@@ -15,6 +16,7 @@ export function Preview() {
   const [localStatus, setLocalStatus] = useState<TaskStatus | null>(null)
   const [approving, setApproving] = useState(false)
   const [approveMsg, setApproveMsg] = useState<string | null>(null)
+  const [regeneratingField, setRegeneratingField] = useState<'asunto' | 'saludo' | 'cuerpo' | 'cta' | null>(null)
 
   // Sync draft & status when task loads (deferred to avoid set-state-in-effect)
   useEffect(() => {
@@ -34,7 +36,8 @@ export function Preview() {
       if (res.success) {
         setLocalStatus(res.status)
         setApproveMsg(
-          `${res.emails_sent} emails enviados · ${res.emails_failed} fallidos`,
+          `${res.emails_sent} correos enviados` +
+          (res.emails_failed > 0 ? ` · ${res.emails_failed} fallidos` : ''),
         )
         void refetch()
       }
@@ -42,6 +45,27 @@ export function Preview() {
       setApproveMsg(parseApiError(err))
     } finally {
       setApproving(false)
+    }
+  }
+
+  const handleRegenerate = async (field: 'asunto' | 'saludo' | 'cuerpo' | 'cta') => {
+    if (!taskId) return
+    setRegeneratingField(field)
+    setApproveMsg(null)
+    try {
+      const res = await regenerateTaskField(taskId, field, draft)
+      if (res.success) {
+        setDraft(res.draft_content)
+        // Actualizar datos de la tarea localmente para mostrar costo y score correctos
+        if (task) {
+          task.cost_usd = res.cost_usd
+          task.agent_score = res.agent_score
+        }
+      }
+    } catch (err) {
+      setApproveMsg(parseApiError(err))
+    } finally {
+      setRegeneratingField(null)
     }
   }
 
@@ -63,6 +87,58 @@ export function Preview() {
   const status = localStatus ?? task.status
   const recipientCount = Array.isArray(task.recipients) ? task.recipients.length : 0
 
+  // Confirmación Visual Premium
+  if (status === 'COMPLETED') {
+    return (
+      <section className="page stack">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Link to="/history">← Historial</Link>
+          <TaskStatusBadge status={status} />
+        </div>
+
+        <div className="card success-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '3.5rem 2rem', gap: '1.5rem', marginTop: '1rem' }}>
+          <div className="success-checkmark-wrapper">
+            <CheckCircle size={64} className="success-checkmark-icon" style={{ color: 'var(--success)' }} />
+          </div>
+
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>¡Campaña Enviada con Éxito!</h2>
+          <p style={{ maxWidth: '400px', margin: '0 auto', color: 'var(--text-muted)', fontSize: '0.925rem' }}>
+            La IA ha finalizado la ejecución y los correos han sido distribuidos mediante Resend.
+          </p>
+
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem',
+            width: '100%', maxWidth: '400px', margin: '1rem 0',
+            background: 'rgba(255,255,255,0.02)', padding: '1.25rem',
+            borderRadius: '12px', border: '1px solid var(--border)',
+            textAlign: 'center'
+          }}>
+            <div>
+              <small style={{ opacity: 0.6, fontSize: '0.8rem' }}>Correos Enviados</small>
+              <br />
+              <strong style={{ fontSize: '1.25rem', color: '#fff' }}>{approveMsg?.split('·')[0] || `${recipientCount} enviados`}</strong>
+            </div>
+            <div>
+              <small style={{ opacity: 0.6, fontSize: '0.8rem' }}>Costo Invertido</small>
+              <br />
+              <strong style={{ fontSize: '1.25rem', color: '#fff' }}>${task.cost_usd.toFixed(4)} USD</strong>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', width: '100%', maxWidth: '400px' }}>
+            <Link to="/history" className="button" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              Ver en Historial
+            </Link>
+            <Link to="/analytics" className="button button-primary" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              Ir a Analíticas
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="page stack">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -73,47 +149,132 @@ export function Preview() {
         </div>
       </div>
 
+      {/* Mensajes de error o éxito superiores */}
+      {approveMsg && (
+        <div className="error-banner">⚠ {approveMsg}</div>
+      )}
+
       {/* ── Draft editable ─────────────────────────── */}
       <div className="card stack">
         <h2>Contenido generado por IA</h2>
 
         <label>
-          <span>Asunto</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span>Asunto</span>
+            <button
+              type="button"
+              className="regen-field-btn"
+              disabled={status === 'APPROVED' || regeneratingField !== null}
+              onClick={() => void handleRegenerate('asunto')}
+            >
+              {regeneratingField === 'asunto' ? (
+                <>
+                  <RefreshCw size={12} className="spin" />
+                  <span>Regenerando...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={12} />
+                  <span>Regenerar con IA</span>
+                </>
+              )}
+            </button>
+          </div>
           <input
             type="text"
             value={draft.asunto}
-            disabled={status === 'COMPLETED' || status === 'APPROVED'}
+            disabled={status === 'APPROVED' || regeneratingField === 'asunto'}
             onChange={(e) => setDraft({ ...draft, asunto: e.target.value })}
           />
         </label>
 
         <label>
-          <span>Saludo</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span>Saludo</span>
+            <button
+              type="button"
+              className="regen-field-btn"
+              disabled={status === 'APPROVED' || regeneratingField !== null}
+              onClick={() => void handleRegenerate('saludo')}
+            >
+              {regeneratingField === 'saludo' ? (
+                <>
+                  <RefreshCw size={12} className="spin" />
+                  <span>Regenerando...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={12} />
+                  <span>Regenerar con IA</span>
+                </>
+              )}
+            </button>
+          </div>
           <input
             type="text"
             value={draft.saludo}
-            disabled={status === 'COMPLETED' || status === 'APPROVED'}
+            disabled={status === 'APPROVED' || regeneratingField === 'saludo'}
             onChange={(e) => setDraft({ ...draft, saludo: e.target.value })}
           />
         </label>
 
         <label>
-          <span>Cuerpo</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span>Cuerpo</span>
+            <button
+              type="button"
+              className="regen-field-btn"
+              disabled={status === 'APPROVED' || regeneratingField !== null}
+              onClick={() => void handleRegenerate('cuerpo')}
+            >
+              {regeneratingField === 'cuerpo' ? (
+                <>
+                  <RefreshCw size={12} className="spin" />
+                  <span>Regenerando...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={12} />
+                  <span>Regenerar con IA</span>
+                </>
+              )}
+            </button>
+          </div>
           <textarea
-            rows={5}
+            rows={8}
             value={draft.cuerpo}
-            disabled={status === 'COMPLETED' || status === 'APPROVED'}
+            disabled={status === 'APPROVED' || regeneratingField === 'cuerpo'}
             onChange={(e) => setDraft({ ...draft, cuerpo: e.target.value })}
             style={{ resize: 'vertical' }}
           />
         </label>
 
         <label>
-          <span>CTA (botón)</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span>CTA (botón)</span>
+            <button
+              type="button"
+              className="regen-field-btn"
+              disabled={status === 'APPROVED' || regeneratingField !== null}
+              onClick={() => void handleRegenerate('cta')}
+            >
+              {regeneratingField === 'cta' ? (
+                <>
+                  <RefreshCw size={12} className="spin" />
+                  <span>Regenerando...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={12} />
+                  <span>Regenerar con IA</span>
+                </>
+              )}
+            </button>
+          </div>
           <input
             type="text"
             value={draft.cta}
-            disabled={status === 'COMPLETED' || status === 'APPROVED'}
+            disabled={status === 'APPROVED' || regeneratingField === 'cta'}
             onChange={(e) => setDraft({ ...draft, cta: e.target.value })}
           />
         </label>
@@ -129,7 +290,7 @@ export function Preview() {
             <strong>{task.agent_score ?? '–'}/10</strong>
           </div>
           <div>
-            <small style={{ opacity: 0.6 }}>Costo</small>
+            <small style={{ opacity: 0.6 }}>Costo acumulado</small>
             <br />
             <strong>${task.cost_usd.toFixed(5)} USD</strong>
           </div>
@@ -161,22 +322,15 @@ export function Preview() {
         <button
           type="button"
           className="button button-primary"
-          disabled={approving}
+          disabled={approving || regeneratingField !== null}
           onClick={() => void handleApprove()}
           style={{ width: '100%', padding: '1rem' }}
         >
           {approving ? 'Enviando…' : '✉ Aprobar y Enviar campaña'}
         </button>
       )}
-
-      {approveMsg && (
-        <p className="csv-match-note">✓ {approveMsg}</p>
-      )}
-
-      {status === 'COMPLETED' && !approveMsg && (
-        <p className="csv-match-note">✓ Campaña completada y enviada.</p>
-      )}
     </section>
   )
 }
+
 
