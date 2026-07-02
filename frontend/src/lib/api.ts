@@ -6,6 +6,7 @@ import type {
   RunRecipeRequest,
   RunRecipeResponse,
   Task,
+  TaskDraftContent,
 } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -53,8 +54,14 @@ export function getTask(taskId: string): Promise<Task> {
   return request(`/api/tasks/${taskId}`)
 }
 
-export function approveTask(taskId: string): Promise<ApproveTaskResponse> {
-  return request(`/api/tasks/${taskId}/approve`, { method: 'POST' })
+export function approveTask(
+  taskId: string,
+  draft?: TaskDraftContent,
+): Promise<ApproveTaskResponse> {
+  return request(`/api/tasks/${taskId}/approve`, {
+    method: 'POST',
+    body: JSON.stringify(draft ? { draft_content: draft } : {}),
+  })
 }
 
 // --- Analíticas ---

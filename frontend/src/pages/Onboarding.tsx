@@ -13,7 +13,8 @@ export function Onboarding() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('force') === 'true') {
-      setChecking(false)
+      // Diferido para no llamar setState de forma sincrona dentro del effect
+      Promise.resolve().then(() => setChecking(false))
       return
     }
 

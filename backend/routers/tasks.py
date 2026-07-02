@@ -2,12 +2,26 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from dependencies.auth import CurrentUser, get_current_user
 from services.db_service import get_supabase
 from services.email_service import send_campaign
 
 router = APIRouter(tags=["Tasks"])
+
+
+class DraftContentIn(BaseModel):
+    asunto: str = ""
+    saludo: str = ""
+    cuerpo: str = ""
+    cta: str = ""
+
+
+class ApproveRequest(BaseModel):
+    # Draft editado por el usuario en el Preview (Human Gate). Opcional:
+    # si viene, se persiste y se usa para el envio; si no, se usa el guardado.
+    draft_content: DraftContentIn | None = None
 
 
 @router.get("/tasks")
@@ -43,8 +57,16 @@ async def get_task_detail(task_id: str, user: CurrentUser = Depends(get_current_
 
 
 @router.post("/tasks/{task_id}/approve")
-async def approve_task(task_id: str, user: CurrentUser = Depends(get_current_user)):
-    """Aprueba y ejecuta el envio real de la campana (Resend)."""
+async def approve_task(
+    task_id: str,
+    body: ApproveRequest | None = None,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Aprueba y ejecuta el envio real de la campana (Resend).
+
+    Si el body trae `draft_content` (editado en el Preview), se persiste y se
+    usa para el envio; si no, se envia el draft guardado.
+    """
     sb = get_supabase()
 
     # Ownership check: la tarea debe pertenecer al usuario del JWT.
@@ -56,8 +78,13 @@ async def approve_task(task_id: str, user: CurrentUser = Depends(get_current_use
     if task["status"] != "PENDING_APPROVAL":
         raise HTTPException(status_code=400, detail=f"La tarea no esta pendiente de aprobacion (estado: {task['status']})")
 
-    draft = task.get("draft_content") or {}
     recipients = task.get("recipients") or []
+
+    # Draft editado por el usuario (Human Gate): persistir y usar.
+    draft = task.get("draft_content") or {}
+    if body and body.draft_content is not None:
+        draft = body.draft_content.model_dump()
+        sb.table("tasks").update({"draft_content": draft}).eq("id", task_id).execute()
 
     # APPROVED -> EXECUTING
     sb.table("tasks").update({"status": "EXECUTING"}).eq("id", task_id).execute()
