@@ -211,10 +211,14 @@
 - [ ] (Opcional) edicion inline del texto generado antes de ver el preview
 
 ### OMAR — Backend de generacion (desbloquea lo de Jhamil)
-- [ ] `POST /api/content/generate` — recibe `{ prompt, channels[], brand_brain }` y devuelve por canal
-      `{ texto, hashtags, cta, imagen_url }`
+- [x] `POST /api/content/generate` ✅ (2026-07-02) — recibe `{ prompt, channels[] }`, usa el Brand Brain
+      del usuario y devuelve `items[]` por canal con `{ channel, subject?, caption, hashtags?, cta, media_alt }`.
+      Una sola llamada LLM para todos los canales (respeta el cap de costo); fallback stub sin keys.
+      Probado real con DeepSeek (5 canales, ~$0.0006).
+      **Para Jhamil:** contrato tipado listo en `frontend/src/lib/api.ts` → `generateContent({ prompt, channels? })`
+      y tipos `ContentItem` / `GenerateContentResponse` en `types/index.ts`. Solo conectar la UI del Estudio.
 - [ ] Integrar **modelo de imagen** (gpt-image-1 / DALL·E 3 / Flux) para imagenes e infografias
-      (~$0.01–0.04 por imagen; NO video IA en esta fase)
+      (~$0.01–0.04 por imagen; NO video IA en esta fase). Hoy `media_alt` describe la imagen a generar.
 - [ ] Persistencia de campañas: tabla `campaigns` (o reutilizar `tasks` con columna `channel`)
 - [ ] Email se mantiene como el unico canal que se **ENVIA** de verdad (Resend); el resto = generar + preview
 

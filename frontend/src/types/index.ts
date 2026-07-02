@@ -127,3 +127,29 @@ export interface RegenerateTaskResponse {
   agent_score: number
 }
 
+// --- Estudio: generación de contenido multicanal ---
+
+// Contenido generado por canal. `subject` solo en email; `hashtags` en redes.
+export interface ContentItem {
+  channel: ChannelType
+  subject?: string
+  caption: string
+  hashtags?: string[]
+  cta?: string
+  media_alt?: string
+}
+
+export interface GenerateContentRequest {
+  prompt: string
+  channels?: ChannelType[] // vacío = todos los canales
+}
+
+export interface GenerateContentResponse {
+  success: boolean
+  prompt: string
+  items: ContentItem[]
+  tokens_used: number
+  cost_usd: number
+  provider?: string
+}
+
