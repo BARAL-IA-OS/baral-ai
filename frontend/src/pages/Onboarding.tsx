@@ -11,6 +11,12 @@ export function Onboarding() {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('force') === 'true') {
+      setChecking(false)
+      return
+    }
+
     hasBrandBrain()
       .then((exists) => {
         if (exists) {

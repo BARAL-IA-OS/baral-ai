@@ -49,6 +49,10 @@ export async function getTasks(limit = 20): Promise<Task[]> {
   return data.tasks
 }
 
+export function getTask(taskId: string): Promise<Task> {
+  return request(`/api/tasks/${taskId}`)
+}
+
 export function approveTask(taskId: string): Promise<ApproveTaskResponse> {
   return request(`/api/tasks/${taskId}/approve`, { method: 'POST' })
 }

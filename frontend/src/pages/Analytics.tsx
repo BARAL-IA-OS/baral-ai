@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../components/ui/Card'
+import { Spinner } from '../components/ui/Spinner'
 import { getAnalytics } from '../lib/api'
 import type { AnalyticsSummary } from '../types'
 
 export function Analytics() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -13,22 +15,18 @@ export function Analytics() {
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : 'Error cargando KPIs'),
       )
+      .finally(() => setLoading(false))
   }, [])
+
+  if (loading) return <section className="page"><Spinner /></section>
 
   return (
     <section className="page stack">
       <div>
         <h1>Analíticas</h1>
-        <p>KPIs reales del prototipo cuando el backend esté disponible.</p>
+        <p>KPIs del pipeline de marketing.</p>
       </div>
-      <div className="pending-backend-banner">
-        <span>⏳</span>
-        <div>
-          <strong>Pendiente de backend</strong>
-          <p>Esta página consume <code>GET /api/analytics/summary</code>. Coordinar contrato con Omar/Saúl.</p>
-        </div>
-      </div>
-      {error ? <p>{error}</p> : null}
+      {error ? <p className="csv-error">⚠ {error}</p> : null}
       <section className="metrics-grid">
         <Card>
           <span>Campañas</span>
@@ -50,3 +48,4 @@ export function Analytics() {
     </section>
   )
 }
+

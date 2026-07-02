@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { AppIcon } from '../ui/AppIcon'
+import { importClients } from '../../lib/api'
 
 interface CSVRow {
   [key: string]: string
@@ -37,25 +38,32 @@ function parseCSV(text: string): ParseResult {
 }
 
 export function CSVUpload() {
+  const [rawFile, setRawFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importSuccess, setImportSuccess] = useState<string | null>(null)
 
   const processFile = useCallback((file: File) => {
     setError(null)
     setParseResult(null)
+    setImportSuccess(null)
     setFileName(file.name)
+    setRawFile(file)
 
     if (!file.name.endsWith('.csv') && file.type !== 'text/csv') {
       setError('El archivo debe ser un CSV.')
       setFileName('')
+      setRawFile(null)
       return
     }
 
     if (file.size > 10 * 1024 * 1024) {
       setError('El archivo excede el límite recomendado de 10 MB.')
       setFileName('')
+      setRawFile(null)
       return
     }
 
@@ -68,6 +76,7 @@ export function CSVUpload() {
         if (result.headers.length === 0) {
           setError('El CSV está vacío o no tiene encabezados.')
           setFileName('')
+          setRawFile(null)
           return
         }
 
@@ -75,11 +84,13 @@ export function CSVUpload() {
       } catch {
         setError('No se pudo leer el archivo CSV.')
         setFileName('')
+        setRawFile(null)
       }
     }
     reader.onerror = () => {
       setError('Error leyendo el archivo.')
       setFileName('')
+      setRawFile(null)
     }
     reader.readAsText(file, 'UTF-8')
   }, [])
@@ -101,6 +112,27 @@ export function CSVUpload() {
     },
     [processFile],
   )
+
+  async function handleImport() {
+    if (!rawFile) return
+    setImporting(true)
+    setError(null)
+    try {
+      const res = await importClients(rawFile)
+      if (res.success) {
+        setImportSuccess(
+          `${res.imported} clientes importados correctamente` +
+          (res.skipped > 0 ? ` · ${res.skipped} filas omitidas` : ''),
+        )
+      } else {
+        setError(res.errors?.join(', ') ?? 'Error al importar los clientes.')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al conectar con el servidor.')
+    } finally {
+      setImporting(false)
+    }
+  }
 
   const recommendedCols = ['nombre', 'email', 'teléfono', 'última compra']
   const matchedCols = parseResult
@@ -149,7 +181,7 @@ export function CSVUpload() {
         <p className="csv-error">⚠ {error}</p>
       )}
 
-      {/* Parse summary */}
+      {/* Parse summary + import action */}
       {parseResult && (
         <div className="csv-summary">
           <div className="csv-summary-header">
@@ -174,9 +206,23 @@ export function CSVUpload() {
               ✓ {matchedCols.length} de {recommendedCols.length} columnas recomendadas encontradas
             </p>
           )}
-          <p className="csv-pending-note">
-            ⏳ Pendiente de endpoint — los datos se enviarán al backend cuando Omar/Saúl definan el contrato.
-          </p>
+
+          {/* Import result or action button */}
+          {importSuccess ? (
+            <p className="csv-match-note" style={{ marginTop: '0.75rem' }}>
+              ✓ {importSuccess}
+            </p>
+          ) : (
+            <button
+              type="button"
+              className="button button-primary"
+              disabled={importing}
+              onClick={() => void handleImport()}
+              style={{ marginTop: '0.75rem', width: '100%' }}
+            >
+              {importing ? 'Importando...' : `Importar ${parseResult.total} clientes`}
+            </button>
+          )}
         </div>
       )}
 
@@ -190,3 +236,4 @@ export function CSVUpload() {
     </section>
   )
 }
+

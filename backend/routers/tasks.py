@@ -25,6 +25,23 @@ async def get_tasks(limit: int = 20, user: CurrentUser = Depends(get_current_use
     return {"tasks": res.data or []}
 
 
+@router.get("/tasks/{task_id}")
+async def get_task_detail(task_id: str, user: CurrentUser = Depends(get_current_user)):
+    """Obtiene los detalles de una tarea/campana especifica del usuario."""
+    res = (
+        get_supabase()
+        .table("tasks")
+        .select("*")
+        .eq("id", task_id)
+        .eq("user_id", user.id)
+        .limit(1)
+        .execute()
+    )
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    return res.data[0]
+
+
 @router.post("/tasks/{task_id}/approve")
 async def approve_task(task_id: str, user: CurrentUser = Depends(get_current_user)):
     """Aprueba y ejecuta el envio real de la campana (Resend)."""

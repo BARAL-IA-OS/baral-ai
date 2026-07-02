@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useTasks } from '../../hooks/useTasks'
 import { Card } from '../ui/Card'
 import { Spinner } from '../ui/Spinner'
@@ -11,7 +12,7 @@ export function TaskList() {
   }
 
   if (error) {
-    return <p>{error}</p>
+    return <p className="csv-error">⚠ {error}</p>
   }
 
   if (tasks.length === 0) {
@@ -21,12 +22,20 @@ export function TaskList() {
   return (
     <section className="stack">
       {tasks.map((task) => (
-        <Card key={task.id}>
-          <h3>{task.recipe_type}</h3>
-          <TaskStatusBadge status={task.status} />
-          <p>Costo: ${task.cost_usd}</p>
-        </Card>
+        <Link to={`/preview/${task.id}`} key={task.id} style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, textTransform: 'capitalize' }}>{task.recipe_type}</h3>
+              <TaskStatusBadge status={task.status} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', opacity: 0.7, marginTop: '0.25rem' }}>
+              <span>Costo: ${task.cost_usd.toFixed(5)}</span>
+              <span>{new Date(task.created_at).toLocaleDateString()}</span>
+            </div>
+          </Card>
+        </Link>
       ))}
     </section>
   )
 }
+
