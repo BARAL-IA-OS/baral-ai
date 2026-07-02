@@ -1,38 +1,34 @@
-from fastapi import APIRouter
-from datetime import datetime
+# backend/routers/tasks.py
+from fastapi import APIRouter, Depends
+
+from dependencies.auth import CurrentUser, get_current_user
+from services.db_service import get_supabase
 
 router = APIRouter(tags=["Tasks"])
 
+
 @router.get("/tasks")
-async def get_tasks_mock(user_id: str, limit: int = 20):  #
-    return {
-        "tasks": [
-            {
-                "id": "mock-task-uuid-001",
-                "recipe_type": "reactivacion",
-                "status": "COMPLETED",       #
-                "recipients": 23,
-                "cost_usd": 0.006,
-                "created_at": datetime.now().isoformat()
-            },
-            {
-                "id": "mock-task-uuid-002",
-                "recipe_type": "bienvenida",
-                "status": "PENDING_APPROVAL", #
-                "recipients": 14,
-                "cost_usd": 0.003,
-                "created_at": datetime.now().isoformat()
-            }
-        ][:limit]
-    }
+async def get_tasks(limit: int = 20, user: CurrentUser = Depends(get_current_user)):
+    """Lista las tareas/campanas del usuario autenticado (filtrado por user_id del JWT)."""
+    res = (
+        get_supabase()
+        .table("tasks")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return {"tasks": res.data or []}
+
 
 @router.post("/tasks/{task_id}/approve")
 async def approve_task_mock(task_id: str):
-    # Simula el salto instantáneo de PENDING -> EXECUTING -> COMPLETED
+    # TODO (Prioridad 4): ejecucion real con Resend + ownership check.
     return {
         "success": True,
         "task_id": task_id,
-        "status": "COMPLETED",   #
-        "emails_sent": 23,       #
-        "emails_failed": 0        #
+        "status": "COMPLETED",
+        "emails_sent": 23,
+        "emails_failed": 0,
     }

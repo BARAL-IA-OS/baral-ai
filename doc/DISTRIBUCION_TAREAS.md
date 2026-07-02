@@ -50,29 +50,34 @@
       (cliente singleton; usa service_role = BYPASSA RLS → filtrar por `user_id` en cada query)
       · Dependencia agregada al proyecto uv: `supabase==2.31.0`
 
-### Prioridad 2 — Backend: Endpoints Core
-> Implementar en este orden, de menos a mas complejo.
+### Prioridad 2 — Backend: Endpoints Core ✅ (2026-07-01)
+> Todos protegidos con JWT; el `user_id` sale del token (ya NO se pasa por query param).
 
-- [ ] `POST /api/onboarding/import-clients` — parsear CSV con Pandas, insertar filas en tabla `clients`, retornar conteo
-- [ ] `GET /api/tasks` — listar tareas del usuario autenticado (filtrar por `user_id` del JWT)
-- [ ] `GET /api/analytics/summary` — agregar datos de `tasks`: total, completadas, costo total, score promedio
+- [x] `POST /api/onboarding/import-clients` — recibe CSV (multipart `file`), parsea con stdlib `csv`
+      (mapeo flexible de encabezados, valida nombre+email, normaliza fechas), inserta en `clients`
+      con `user_id`. Devuelve `{ imported, skipped, columns_detected, errors }`.
+      · Nota: se uso `csv` de la stdlib en vez de Pandas (mas liviano, sin dependencia pesada).
+- [x] `GET /api/tasks?limit=20` — tareas del usuario (filtra por `user_id` del JWT, orden desc).
+- [x] `GET /api/analytics/summary` — agrega `tasks`: `{ total_tasks, completed_tasks, total_cost_usd, average_agent_score }` (contrato `AnalyticsSummary`).
+> Probado contra Supabase real: queries + insert/delete E2E OK.
+> **Para Jhamil:** estos endpoints requieren `Authorization: Bearer <access_token>`; ya NO mandar `?user_id=`.
 
-### Prioridad 3 — Backend: Pipeline de IA
-> El nucleo del producto. Implementar en `services/`.
+### Prioridad 3 — Backend: Pipeline de IA ✅ (2026-07-01)
+> El nucleo del producto. Implementado en `services/` + `prompts/`.
 
-- [ ] `llm_service.py` — clase `LLMService` con:
-  - Llamada a OpenAI `gpt-4o-mini` (temperatura 0.3, output JSON)
-  - Fallback automatico a Claude Haiku si OpenAI retorna 429/500
-  - Logging de `tokens_used` y `cost_usd` por llamada
-- [ ] `agent_pipeline.py` — orquestar los 3 agentes en secuencia:
-  1. Orquestador: interpreta receta + filtra clientes de DB segun parametros
-  2. Copywriter: genera email personalizado por cliente (asunto, saludo, cuerpo, CTA)
-  3. Revisor: verifica prohibiciones del Brand Brain, puntua 0-10, regenera si score < 7
-- [ ] Completar system prompts en `prompts/orchestrator.py`, `prompts/copywriter.py`, `prompts/reviewer.py`
-- [ ] `POST /api/recipes/run` — endpoint que:
-  - Crea tarea en DB con status `CREATED`
-  - Ejecuta pipeline de agentes (status → `PROCESSING` → `PENDING_APPROVAL`)
-  - Retorna `{ task_id, status, draft_content, recipients, cost_usd }`
+- [x] `llm_service.py` — `LLMService.complete_json()`:
+  - OpenAI `gpt-4o-mini` (JSON mode, temperatura configurable) como primario.
+  - Fallback automatico a **Claude Haiku 4.5** (`claude-haiku-4-5`) si OpenAI falla (429/500/red/parseo).
+  - Registra `tokens` y `cost_usd` por llamada (precios por 1M tokens).
+- [x] `agent_pipeline.py` — 3 agentes en secuencia:
+  1. Orquestador: filtra clientes en codigo segun receta (dias_inactivo / dias_postventa / dias_registro).
+  2. Copywriter: genera email plantilla con marcadores `{{nombre}}`/`{{producto}}`.
+  3. Revisor: puntua 0-10 y verifica prohibiciones; **regenera 1 vez si score < 7** (cap de costo).
+- [x] System prompts en `prompts/copywriter.py`, `prompts/reviewer.py`, `prompts/orchestrator.py`.
+- [x] `POST /api/recipes/run` — crea tarea `PROCESSING`, corre pipeline, guarda draft/recipients/tokens/cost/score, pasa a `PENDING_APPROVAL`. Devuelve `{ task_id, status, draft_content, recipients, tokens_used, cost_usd, agent_score, provider }`.
+> **Sin API keys aun:** el pipeline usa un fallback determinista local (`provider: "stub"`, costo 0) para que el flujo funcione. Al setear `OPENAI_API_KEY`/`ANTHROPIC_API_KEY` en `backend/.env`, usa IA real automaticamente.
+> Probado contra Supabase real: filtro de clientes, revisor de prohibiciones, y persistencia de `tasks` E2E OK.
+> Dependencias uv agregadas: `openai`, `anthropic`.
 
 ### Prioridad 4 — Backend: Ejecucion Real
 - [ ] `email_service.py` — integrar Resend API para envio real de emails

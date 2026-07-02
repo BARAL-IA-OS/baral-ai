@@ -68,12 +68,12 @@ Hecho:
 - [x] `GET /health` (reporta `supabase_configured`).
 - [x] Middleware JWT: `get_current_user` valida token Supabase (`dependencies/auth.py`) + `GET /api/me`.
 - [x] Conexion a Supabase con `SUPABASE_SERVICE_KEY` (`services/db_service.py`).
+- [x] `POST /api/onboarding/import-clients` (parser CSV stdlib, inserta en `clients`).
+- [x] `GET /api/tasks` y `GET /api/analytics/summary` (reales, filtrados por JWT).
+- [x] Pipeline de 3 agentes (`llm_service.py`, `agent_pipeline.py`, prompts) + `POST /api/recipes/run`.
+      OpenAI `gpt-4o-mini` -> fallback Claude Haiku 4.5; fallback determinista sin keys.
 
 Pendiente (backend reasignado de Saul):
-
-- [ ] `POST /api/onboarding/import-clients` (parser CSV).
-- [ ] `GET /api/tasks`, `GET /api/analytics/summary`.
-- [ ] Pipeline de 3 agentes (Orquestador, Copywriter, Revisor) + prompts.
 - [ ] `POST /api/recipes/run`.
 - [ ] `email_service.py` con Resend + `POST /api/tasks/{id}/approve`.
 - [ ] `POST /api/content/generate` (texto + imagen por canal) para el Estudio.
