@@ -4,7 +4,9 @@ import { useTask } from '../hooks/useTask'
 import { approveTask, parseApiError, regenerateTaskField } from '../lib/api'
 import { TaskStatusBadge } from '../components/history/TaskStatusBadge'
 import { Spinner } from '../components/ui/Spinner'
-import { Sparkles, RefreshCw, CheckCircle, ArrowRight } from 'lucide-react'
+import { Sparkles, RefreshCw, CheckCircle, ArrowRight, Laptop, Smartphone } from 'lucide-react'
+import { EmailPreviewMock } from '../components/preview/EmailPreviewMock'
+import { getBrandBrain } from '../hooks/useBrandBrain'
 import type { TaskDraftContent, TaskStatus } from '../types'
 
 export function Preview() {
@@ -17,6 +19,21 @@ export function Preview() {
   const [approving, setApproving] = useState(false)
   const [approveMsg, setApproveMsg] = useState<string | null>(null)
   const [regeneratingField, setRegeneratingField] = useState<'asunto' | 'saludo' | 'cuerpo' | 'cta' | null>(null)
+
+  const [brandName, setBrandName] = useState<string>('Nuestra Empresa')
+  const [deviceMode, setDeviceMode] = useState<'desktop' | 'mobile'>('desktop')
+
+  // Load Brand Brain to get company name
+  useEffect(() => {
+    getBrandBrain()
+      .then((brand) => {
+        if (brand?.industria) {
+          setBrandName(brand.industria)
+        }
+      })
+      .catch(() => undefined)
+  }, [])
+
 
   // Sync draft & status when task loads (deferred to avoid set-state-in-effect)
   useEffect(() => {
@@ -141,7 +158,7 @@ export function Preview() {
 
   return (
     <section className="page stack">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
         <Link to="/history">← Historial</Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <TaskStatusBadge status={status} />
@@ -151,136 +168,194 @@ export function Preview() {
 
       {/* Mensajes de error o éxito superiores */}
       {approveMsg && (
-        <div className="error-banner">⚠ {approveMsg}</div>
+        <div className="error-banner" style={{ marginBottom: '0.5rem' }}>⚠ {approveMsg}</div>
       )}
 
-      {/* ── Draft editable ─────────────────────────── */}
-      <div className="card stack">
-        <h2>Contenido generado por IA</h2>
+      {/* ── Diseño Split (Editor a la izquierda, Preview a la derecha) ── */}
+      <div className="preview-split-layout">
+        
+        {/* Lado Izquierdo: Editor */}
+        <div className="card stack editor-panel">
+          <h2>Contenido generado por IA</h2>
 
-        <label>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-            <span>Asunto</span>
-            <button
-              type="button"
-              className="regen-field-btn"
-              disabled={status === 'APPROVED' || regeneratingField !== null}
-              onClick={() => void handleRegenerate('asunto')}
-            >
-              {regeneratingField === 'asunto' ? (
-                <>
-                  <RefreshCw size={12} className="spin" />
-                  <span>Regenerando...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={12} />
-                  <span>Regenerar con IA</span>
-                </>
-              )}
-            </button>
-          </div>
-          <input
-            type="text"
-            value={draft.asunto}
-            disabled={status === 'APPROVED' || regeneratingField === 'asunto'}
-            onChange={(e) => setDraft({ ...draft, asunto: e.target.value })}
-          />
-        </label>
+          <label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <span>Asunto</span>
+              <button
+                type="button"
+                className="regen-field-btn"
+                disabled={status === 'APPROVED' || regeneratingField !== null}
+                onClick={() => void handleRegenerate('asunto')}
+              >
+                {regeneratingField === 'asunto' ? (
+                  <>
+                    <RefreshCw size={12} className="spin" />
+                    <span>Regenerando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={12} />
+                    <span>Regenerar con IA</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <input
+              type="text"
+              value={draft.asunto}
+              disabled={status === 'APPROVED' || regeneratingField === 'asunto'}
+              onChange={(e) => setDraft({ ...draft, asunto: e.target.value })}
+            />
+          </label>
 
-        <label>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-            <span>Saludo</span>
-            <button
-              type="button"
-              className="regen-field-btn"
-              disabled={status === 'APPROVED' || regeneratingField !== null}
-              onClick={() => void handleRegenerate('saludo')}
-            >
-              {regeneratingField === 'saludo' ? (
-                <>
-                  <RefreshCw size={12} className="spin" />
-                  <span>Regenerando...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={12} />
-                  <span>Regenerar con IA</span>
-                </>
-              )}
-            </button>
-          </div>
-          <input
-            type="text"
-            value={draft.saludo}
-            disabled={status === 'APPROVED' || regeneratingField === 'saludo'}
-            onChange={(e) => setDraft({ ...draft, saludo: e.target.value })}
-          />
-        </label>
+          <label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <span>Saludo</span>
+              <button
+                type="button"
+                className="regen-field-btn"
+                disabled={status === 'APPROVED' || regeneratingField !== null}
+                onClick={() => void handleRegenerate('saludo')}
+              >
+                {regeneratingField === 'saludo' ? (
+                  <>
+                    <RefreshCw size={12} className="spin" />
+                    <span>Regenerando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={12} />
+                    <span>Regenerar con IA</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <input
+              type="text"
+              value={draft.saludo}
+              disabled={status === 'APPROVED' || regeneratingField === 'saludo'}
+              onChange={(e) => setDraft({ ...draft, saludo: e.target.value })}
+            />
+          </label>
 
-        <label>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-            <span>Cuerpo</span>
-            <button
-              type="button"
-              className="regen-field-btn"
-              disabled={status === 'APPROVED' || regeneratingField !== null}
-              onClick={() => void handleRegenerate('cuerpo')}
-            >
-              {regeneratingField === 'cuerpo' ? (
-                <>
-                  <RefreshCw size={12} className="spin" />
-                  <span>Regenerando...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={12} />
-                  <span>Regenerar con IA</span>
-                </>
-              )}
-            </button>
-          </div>
-          <textarea
-            rows={8}
-            value={draft.cuerpo}
-            disabled={status === 'APPROVED' || regeneratingField === 'cuerpo'}
-            onChange={(e) => setDraft({ ...draft, cuerpo: e.target.value })}
-            style={{ resize: 'vertical' }}
-          />
-        </label>
+          <label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <span>Cuerpo</span>
+              <button
+                type="button"
+                className="regen-field-btn"
+                disabled={status === 'APPROVED' || regeneratingField !== null}
+                onClick={() => void handleRegenerate('cuerpo')}
+              >
+                {regeneratingField === 'cuerpo' ? (
+                  <>
+                    <RefreshCw size={12} className="spin" />
+                    <span>Regenerando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={12} />
+                    <span>Regenerar con IA</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <textarea
+              rows={12}
+              value={draft.cuerpo}
+              disabled={status === 'APPROVED' || regeneratingField === 'cuerpo'}
+              onChange={(e) => setDraft({ ...draft, cuerpo: e.target.value })}
+              style={{ resize: 'vertical' }}
+            />
+          </label>
 
-        <label>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-            <span>CTA (botón)</span>
-            <button
-              type="button"
-              className="regen-field-btn"
-              disabled={status === 'APPROVED' || regeneratingField !== null}
-              onClick={() => void handleRegenerate('cta')}
-            >
-              {regeneratingField === 'cta' ? (
-                <>
-                  <RefreshCw size={12} className="spin" />
-                  <span>Regenerando...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={12} />
-                  <span>Regenerar con IA</span>
-                </>
-              )}
-            </button>
+          <label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <span>CTA (botón)</span>
+              <button
+                type="button"
+                className="regen-field-btn"
+                disabled={status === 'APPROVED' || regeneratingField !== null}
+                onClick={() => void handleRegenerate('cta')}
+              >
+                {regeneratingField === 'cta' ? (
+                  <>
+                    <RefreshCw size={12} className="spin" />
+                    <span>Regenerando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={12} />
+                    <span>Regenerar con IA</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <input
+              type="text"
+              value={draft.cta}
+              disabled={status === 'APPROVED' || regeneratingField === 'cta'}
+              onChange={(e) => setDraft({ ...draft, cta: e.target.value })}
+            />
+          </label>
+        </div>
+
+        {/* Lado Derecho: Vista Previa Sticky */}
+        <div className="preview-panel-wrapper stack">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', gap: '1rem', flexWrap: 'wrap' }}>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Vista previa del correo</h3>
+            
+            {/* Control segmentado de dispositivo */}
+            <div className="segmented-control device-selector">
+              <button
+                type="button"
+                className={`segmented-btn ${deviceMode === 'desktop' ? 'active' : ''}`}
+                onClick={() => setDeviceMode('desktop')}
+                title="Vista Escritorio"
+              >
+                <Laptop size={14} />
+                <span>Escritorio</span>
+              </button>
+              <button
+                type="button"
+                className={`segmented-btn ${deviceMode === 'mobile' ? 'active' : ''}`}
+                onClick={() => setDeviceMode('mobile')}
+                title="Vista Móvil"
+              >
+                <Smartphone size={14} />
+                <span>Móvil</span>
+              </button>
+            </div>
           </div>
-          <input
-            type="text"
-            value={draft.cta}
-            disabled={status === 'APPROVED' || regeneratingField === 'cta'}
-            onChange={(e) => setDraft({ ...draft, cta: e.target.value })}
-          />
-        </label>
+
+          <div className="email-preview-container" style={{ display: 'flex', justifyContent: 'center', width: '100%', overflow: 'hidden' }}>
+            {deviceMode === 'mobile' ? (
+              <div className="mobile-bezel">
+                <div className="mobile-speaker" />
+                <div className="mobile-screen">
+                  <EmailPreviewMock
+                    draft={draft}
+                    recipients={task.recipients}
+                    brandName={brandName}
+                  />
+                </div>
+                <div className="mobile-home-bar" />
+              </div>
+            ) : (
+              <div style={{ width: '100%' }}>
+                <EmailPreviewMock
+                  draft={draft}
+                  recipients={task.recipients}
+                  brandName={brandName}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
 
-      {/* ── Métricas & destinatarios ───────────────── */}
+      {/* ── Métricas de Auditoría ───────────────────── */}
       <div className="card stack">
         <h3>Auditoría</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
@@ -332,5 +407,7 @@ export function Preview() {
     </section>
   )
 }
+
+
 
 

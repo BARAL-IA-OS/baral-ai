@@ -2521,3 +2521,321 @@ textarea {
   }
 }
 
+/* ── Segmented Control / Tabs ──────────────────── */
+
+.segmented-control-wrapper {
+  margin: 1rem 0;
+}
+
+.segmented-control {
+  display: inline-flex;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.segmented-btn:hover {
+  color: var(--text);
+}
+
+.segmented-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.device-selector .segmented-btn svg {
+  opacity: 0.7;
+}
+
+.device-selector .segmented-btn.active svg {
+  opacity: 1;
+  color: var(--primary);
+}
+
+/* ── Email Preview Mockup ──────────────────────── */
+
+.email-mock-envelope {
+  display: flex;
+  flex-direction: column;
+  background: #18181b;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.email-mock-chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #121214;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.email-mock-chrome-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.email-mock-chrome-dot.red { background: #ef4444; }
+.email-mock-chrome-dot.yellow { background: #f59e0b; }
+.email-mock-chrome-dot.green { background: #10b981; }
+
+.email-mock-chrome-title {
+  margin-left: 12px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email-mock-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #141416;
+  border-bottom: 1px solid var(--border);
+}
+
+.email-mock-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.email-mock-sender {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.email-mock-email {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.email-mock-date {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.email-mock-to {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.email-mock-body-container {
+  padding: 24px 16px;
+  background: #0f0f11;
+  display: flex;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.email-mock-inner-card {
+  width: 100%;
+  max-width: 600px;
+  background: #18181b;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 32px 24px;
+}
+
+.email-mock-logo-area {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.email-mock-logo-text {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #fff;
+}
+
+.email-mock-message-content {
+  color: #e4e4e7;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.email-mock-greeting {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 16px;
+}
+
+.email-mock-body-text {
+  white-space: pre-wrap;
+  margin-bottom: 28px;
+}
+
+.email-mock-cta-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 32px 0;
+}
+
+.email-mock-cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #7c3aed, #5545ed);
+  color: #fff !important;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+}
+
+.email-mock-cta-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+}
+
+.email-mock-footer {
+  margin-top: 36px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Mobile Bezel Frame ────────────────────────── */
+
+.mobile-bezel {
+  position: relative;
+  width: 360px;
+  height: 640px;
+  background: #000;
+  border: 12px solid #222;
+  border-radius: 36px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: mobile-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes mobile-slide-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.mobile-speaker {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  z-index: 10;
+}
+
+.mobile-screen {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  background: #0f0f11;
+  /* Hide scrollbar */
+  scrollbar-width: none;
+}
+.mobile-screen::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-screen .email-mock-envelope {
+  border: none;
+  border-radius: 0;
+}
+
+.mobile-screen .email-mock-chrome {
+  display: none; /* Hide Chrome mock in mobile, simulated by device top bar */
+}
+
+.mobile-home-bar {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: #666;
+  border-radius: 2px;
+  z-index: 10;
+}
+
+/* ── Split Layout for Preview & Editor ─────────── */
+
+.preview-split-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+}
+
+.preview-panel-wrapper {
+  position: sticky;
+  top: 90px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 20px;
+}
+
+@media (max-width: 1200px) {
+  .preview-split-layout {
+    grid-template-columns: 1fr;
+  }
+  .preview-panel-wrapper {
+    position: static;
+  }
+}
+
