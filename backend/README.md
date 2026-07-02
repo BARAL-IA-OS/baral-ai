@@ -96,7 +96,8 @@ curl http://localhost:8000/health
 | `POST` | `/api/onboarding/import-clients` | ✅ | Sube CSV (multipart), inserta en `clients` |
 | `POST` | `/api/recipes/run` | ✅ | Pipeline de 3 agentes → crea tarea `PENDING_APPROVAL` |
 | `GET`  | `/api/tasks?limit=20` | ✅ | Campañas del usuario |
-| `POST` | `/api/tasks/{id}/approve` | ✅ | Envía la campaña (Resend) → `COMPLETED` |
+| `GET`  | `/api/tasks/{id}` | ✅ | Detalle de una campaña (para el Preview) |
+| `POST` | `/api/tasks/{id}/approve` | ✅ | Envía la campaña (Resend) → `COMPLETED`. Acepta `draft_content` editado (Human Gate): lo persiste y lo usa para el envío |
 | `GET`  | `/api/analytics/summary` | ✅ | KPIs agregados (contrato `AnalyticsSummary`) |
 
 ---

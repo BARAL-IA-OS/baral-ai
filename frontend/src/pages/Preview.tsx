@@ -29,7 +29,8 @@ export function Preview() {
     if (!taskId) return
     setApproving(true)
     try {
-      const res = await approveTask(taskId)
+      // Envia el draft editado (Human Gate): se persiste y se usa para el envio.
+      const res = await approveTask(taskId, draft)
       if (res.success) {
         setLocalStatus(res.status)
         setApproveMsg(

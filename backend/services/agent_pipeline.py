@@ -39,12 +39,21 @@ def _days_since(value) -> int | None:
     return (date.today() - d).days if d else None
 
 
+def _dias_param(params: dict, *keys: str, default: int) -> int:
+    """Toma el primer parametro de dias disponible (acepta nombre especifico o 'dias' generico)."""
+    for key in keys:
+        value = params.get(key)
+        if value is not None:
+            return int(value)
+    return default
+
+
 def filter_recipients(recipe_type: str, params: dict, clients: list[dict]) -> list[dict]:
     """Orquestador: selecciona los clientes objetivo segun la receta."""
     params = params or {}
 
     if recipe_type == "reactivacion":
-        dias = int(params.get("dias_inactivo", 60))
+        dias = _dias_param(params, "dias_inactivo", "dias", default=60)
         out = []
         for c in clients:
             since = _days_since(c.get("ultima_compra"))
@@ -53,7 +62,7 @@ def filter_recipients(recipe_type: str, params: dict, clients: list[dict]) -> li
         return out
 
     if recipe_type == "postventa":
-        dias = int(params.get("dias_postventa", 7))
+        dias = _dias_param(params, "dias_postventa", "dias", default=7)
         out = []
         for c in clients:
             since = _days_since(c.get("ultima_compra"))
@@ -62,7 +71,7 @@ def filter_recipients(recipe_type: str, params: dict, clients: list[dict]) -> li
         return out
 
     if recipe_type == "bienvenida":
-        dias = int(params.get("dias_registro", 7))
+        dias = _dias_param(params, "dias_registro", "dias", default=7)
         out = []
         for c in clients:
             since = _days_since(c.get("created_at"))

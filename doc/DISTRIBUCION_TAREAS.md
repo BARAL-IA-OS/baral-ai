@@ -128,22 +128,23 @@
 
 ## JHAMIL — Frontend Developer
 
-### Prioridad 1 — Integracion con Backend (desbloquea cuando Omar entregue endpoints)
-> Reemplazar datos mock/estaticos con llamadas reales a la API.
+### Prioridad 1 — Integracion con Backend ✅ (2026-07-02, Jhamil)
+> Datos mock reemplazados por llamadas reales a la API.
 
-- [ ] Conectar CSV upload (`CSVUpload.tsx`) al endpoint `POST /api/onboarding/import-clients`
-  - Mostrar conteo real de clientes importados: "X clientes importados correctamente"
-  - Manejar errores de formato de CSV con mensaje claro al usuario
-- [ ] Conectar flujo de Receta (`RecipeFlow.tsx` / `Recipe.tsx`) a `POST /api/recipes/run`
-  - Mostrar mensajes de progreso mientras la IA procesa (CREATED → PROCESSING)
-  - Navegar automaticamente a `/preview/:taskId` cuando retorna `PENDING_APPROVAL`
-- [ ] Conectar pagina Preview (`Preview.tsx`) a los datos reales del `task_id`
-  - Mostrar `draft_content` editable (asunto, saludo, cuerpo, CTA)
-  - Mostrar lista de destinatarios (`recipients`)
-  - Mostrar costo estimado (`cost_usd`) y score del revisor (`agent_score`)
-  - Boton "Aprobar y Enviar" conectado a `POST /api/tasks/{id}/approve`
-- [ ] Conectar historial (`History.tsx` / `TaskList.tsx`) a `GET /api/tasks`
-- [ ] Conectar analytics (`Analytics.tsx`) a `GET /api/analytics/summary`
+- [x] CSV upload (`CSVUpload.tsx`) → `POST /api/onboarding/import-clients` (conteo real, errores).
+- [x] Flujo de Receta (`RecipeParams.tsx`) → `POST /api/recipes/run` con hook `useRecipeRunner`
+      (stepper del pipeline + navegacion automatica a `/preview/:taskId`).
+- [x] Preview (`Preview.tsx`) → detalle real via `useTask` + `getTask`: draft editable, destinatarios,
+      costo y score. Boton "Aprobar y Enviar" → `POST /api/tasks/{id}/approve`.
+- [x] Historial (`History.tsx` / `TaskList.tsx`) → `GET /api/tasks`.
+- [x] Analytics (`Analytics.tsx`) → `GET /api/analytics/summary`.
+- [x] **Human Gate real:** el draft editado se envia y persiste (`approveTask(id, draft)`).
+
+> **Correcciones de Omar sobre este avance (2026-07-02):**
+> - Lint roto en `Onboarding.tsx` (setState sincrono en effect) → arreglado.
+> - Desajuste de parametro: el front enviaba `{ dias }` y el orquestador leia `dias_inactivo`;
+>   el backend ahora acepta `dias` generico como fallback (el valor del usuario ya se respeta).
+> - Endpoint nuevo `GET /api/tasks/{id}` (detalle) + `approve` acepta `draft_content` editado.
 
 ### Prioridad 2 — Pulir UI/UX
 - [ ] Corregir textos con caracteres de encoding roto que aparezcan en la UI

@@ -94,13 +94,16 @@ Hecho:
 - [x] Sidebar: items Dashboard / Estudio / Historial / Analiticas + seccion CUENTA (Notificaciones, Configuracion, Cerrar sesion). TopBar eliminado.
 - [x] Estudio (`/studio`): prompt + lista "Mis campanas" (scroll propio) + preview celular full-height.
 - [x] Mockups de preview por canal: Email, WhatsApp, Instagram, Facebook, TikTok (selector dropdown).
-- [x] `npm.cmd run lint` y `npm.cmd run build` pasan.
+- [x] **Integracion con el backend real:** CSV upload (`importClients`), recetas con stepper de pipeline
+      (`useRecipeRunner`), Preview con detalle de tarea (`useTask` + `getTask`), aprobar y enviar,
+      historial y analytics conectados.
+- [x] **Human Gate:** el draft editado en el Preview se envia y se persiste (via `approveTask(id, draft)`).
+- [x] `npm run lint` y `npm run build` pasan.
 
 Pendiente:
 
-- [ ] Conectar CSV upload, recetas, preview, historial y analytics a endpoints reales.
-- [ ] Cargar Brand Brain real en los mockups (hoy usan datos de ejemplo "Studio Foto").
-- [ ] Renderizar la imagen real generada en el preview (hoy placeholder).
+- [ ] Cargar Brand Brain real en los mockups del Estudio (hoy usan datos de ejemplo "Studio Foto").
+- [ ] Renderizar la imagen real generada en el preview del Estudio (hoy placeholder).
 - [ ] Conectar "Generar campana" a `POST /api/content/generate`.
 - [ ] Agrupar el Dashboard en las 2 familias (Mensajes a clientes / Contenido para redes).
 - [ ] Pulir estados vacios, errores y loading.
@@ -138,13 +141,15 @@ Endpoints esperados:
 
 ```text
 GET  /health
+GET  /api/me
 POST /api/onboarding/import-clients
 POST /api/recipes/run
 GET  /api/tasks
-POST /api/tasks/{taskId}/approve
+GET  /api/tasks/{taskId}             # detalle (para el Preview)
+POST /api/tasks/{taskId}/approve     # acepta draft_content editado (Human Gate)
 GET  /api/analytics/summary
-POST /api/content/generate          # texto + imagen por canal (Estudio)
-POST /api/strategies                # Feature A: Mis Estrategias (Sprint 2)
+POST /api/content/generate          # texto + imagen por canal (Estudio) — PENDIENTE
+POST /api/strategies                # Feature A: Mis Estrategias (Sprint 2) — PENDIENTE
 GET  /api/strategies
 DELETE /api/strategies/{id}
 ```

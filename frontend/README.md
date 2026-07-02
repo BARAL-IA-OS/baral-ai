@@ -56,10 +56,18 @@ y están alineadas con el backend real:
 | `importClients(file)` | `POST /api/onboarding/import-clients` | `{ imported, skipped, columns_detected, errors }` |
 | `runRecipe({ recipe_type, params })` | `POST /api/recipes/run` | draft + recipients + tokens/costo/score |
 | `getTasks(limit?)` | `GET /api/tasks` | `Task[]` |
-| `approveTask(id)` | `POST /api/tasks/{id}/approve` | `{ status, emails_sent, emails_failed, errors }` |
+| `getTask(id)` | `GET /api/tasks/{id}` | `Task` (detalle para el Preview) |
+| `approveTask(id, draft?)` | `POST /api/tasks/{id}/approve` | `{ status, emails_sent, emails_failed, errors }` |
 | `getAnalytics()` | `GET /api/analytics/summary` | `AnalyticsSummary` |
 
+`approveTask` acepta el draft editado (Human Gate): si se pasa, el backend lo persiste y envía eso.
+
 Los contratos TypeScript están en `src/types/index.ts` (fuente de verdad; la mantiene Omar).
+
+**Hooks de integración:**
+- `useRecipeRunner` — ejecuta una receta, hace polling del estado y navega al Preview.
+- `useTask(id)` — carga el detalle de una campaña.
+- `useTasks` — lista de campañas para el historial.
 
 ---
 
