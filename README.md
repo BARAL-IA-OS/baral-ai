@@ -65,11 +65,12 @@ Hecho:
 - [x] Tipos base en `frontend/src/types/index.ts` (+ `ChannelType`, `SocialDraft`).
 - [x] API wrapper base en `frontend/src/lib/api.ts`.
 - [x] `brand_brain.user_id` unico; onboarding hace upsert (no duplica).
+- [x] `GET /health` (reporta `supabase_configured`).
+- [x] Middleware JWT: `get_current_user` valida token Supabase (`dependencies/auth.py`) + `GET /api/me`.
+- [x] Conexion a Supabase con `SUPABASE_SERVICE_KEY` (`services/db_service.py`).
 
 Pendiente (backend reasignado de Saul):
 
-- [ ] `GET /health`.
-- [ ] Verificacion JWT de Supabase + conexion con `SUPABASE_SERVICE_KEY`.
 - [ ] `POST /api/onboarding/import-clients` (parser CSV).
 - [ ] `GET /api/tasks`, `GET /api/analytics/summary`.
 - [ ] Pipeline de 3 agentes (Orquestador, Copywriter, Revisor) + prompts.

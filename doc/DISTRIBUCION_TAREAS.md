@@ -39,12 +39,16 @@
 
 ## OMAR QUISPE — Tech Lead & Full Stack
 
-### Prioridad 1 — Backend: Infraestructura Base
+### Prioridad 1 — Backend: Infraestructura Base ✅ (2026-07-01)
 > El frontend esta bloqueado hasta que estos endpoints respondan.
 
-- [ ] `GET /health` — respuesta `{ status: "ok" }` para verificar que el server corre
-- [ ] Middleware JWT — verificar token de Supabase en cada request protegido
-- [ ] Conectar backend a Supabase con `SUPABASE_SERVICE_KEY` en `db_service.py`
+- [x] `GET /health` — devuelve `{ status, service, version, supabase_configured }` (`routers/health.py`)
+- [x] Middleware JWT — dependencia `get_current_user` valida el token de Supabase (`dependencies/auth.py`)
+      · Endpoint de prueba `GET /api/me` protegido (`routers/auth.py`)
+      · El frontend debe mandar `Authorization: Bearer <access_token de Supabase>`
+- [x] Conectar backend a Supabase con `SUPABASE_SERVICE_KEY` en `services/db_service.py`
+      (cliente singleton; usa service_role = BYPASSA RLS → filtrar por `user_id` en cada query)
+      · Dependencia agregada al proyecto uv: `supabase==2.31.0`
 
 ### Prioridad 2 — Backend: Endpoints Core
 > Implementar en este orden, de menos a mas complejo.
