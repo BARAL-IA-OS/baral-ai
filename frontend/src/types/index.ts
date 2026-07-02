@@ -69,6 +69,7 @@ export interface Task {
   tokens_used: number
   cost_usd: number
   agent_score?: number
+  error_log?: string
   created_at: string
   completed_at?: string
 }
@@ -78,10 +79,37 @@ export interface RunRecipeRequest {
   params: Record<string, unknown>
 }
 
+// Respuesta real de POST /api/recipes/run
 export interface RunRecipeResponse {
   success: boolean
   task_id: string
   status: TaskStatus
+  draft_content: TaskDraftContent
+  recipients: Client[]
+  tokens_used: number
+  cost_usd: number
+  agent_score: number
+  provider?: string
+}
+
+// Respuesta real de POST /api/tasks/{id}/approve
+export interface ApproveTaskResponse {
+  success: boolean
+  task_id: string
+  status: TaskStatus
+  emails_sent: number
+  emails_failed: number
+  provider?: string
+  errors?: string[]
+}
+
+// Respuesta real de POST /api/onboarding/import-clients
+export interface ImportClientsResponse {
+  success: boolean
+  imported: number
+  skipped: number
+  columns_detected: string[]
+  errors: string[]
 }
 
 export interface AnalyticsSummary {

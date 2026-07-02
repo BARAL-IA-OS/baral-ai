@@ -80,12 +80,20 @@
 > Dependencias uv agregadas: `openai`, `anthropic`.
 > **Proveedor de PRUEBAS (DeepSeek):** si `DEEPSEEK_API_KEY` esta en `backend/.env`, el pipeline lo usa primero (compatible con el SDK de OpenAI, `base_url=https://api.deepseek.com`) para no gastar en OpenAI/Anthropic durante desarrollo. NO cambia el plan real (OpenAI primario + Anthropic fallback): con la key vacia, ese orden vuelve a aplicar. Probado E2E con IA real (`deepseek-chat`): borrador en tono de marca, score 9, ~$0.0004/tarea.
 
-### Prioridad 4 — Backend: Ejecucion Real
-- [ ] `email_service.py` — integrar Resend API para envio real de emails
-- [ ] `POST /api/tasks/{id}/approve` — endpoint que:
-  - Verifica que la tarea pertenece al usuario (ownership check)
-  - Cambia status a `APPROVED` → `EXECUTING`
-  - Llama a `email_service` para enviar emails a todos los destinatarios
+### Prioridad 4 — Backend: Ejecucion Real ✅ (2026-07-02)
+- [x] `email_service.py` — `send_campaign()` con Resend:
+  - Personaliza cada email ({{nombre}}/{{producto}}) y arma HTML.
+  - Sin `RESEND_API_KEY`: modo dry-run (marca enviado sin enviar).
+  - `TEST_EMAIL_OVERRIDE`: redirige TODO a un correo (evita spamear clientes).
+  - Tope `MAX_EMAILS_PER_RUN` (default 25) para proteger el limite diario.
+- [x] `POST /api/tasks/{id}/approve` — ownership check por JWT, solo desde `PENDING_APPROVAL`,
+  `EXECUTING` -> envia -> `COMPLETED` (o `FAILED` si todo falla) con `completed_at`.
+  Devuelve `{ status, emails_sent, emails_failed, provider, errors }`.
+> Probado con envio REAL vía Resend: 1 email entregado; flujo approve E2E `PENDING_APPROVAL -> COMPLETED` OK.
+> Dependencia uv: `resend`.
+> ⚠️ **Limite de Resend sin dominio:** solo entrega al correo de la cuenta (`juanrammamani105@gmail.com`).
+>   Para enviar a clientes reales o a otro correo, **verificar un dominio** en resend.com/domains y
+>   cambiar `RESEND_FROM` a ese dominio. Por eso `TEST_EMAIL_OVERRIDE=juanrammamani105@gmail.com` por ahora.
   - Actualiza status a `COMPLETED` o `FAILED` con detalle en `error_log`
 
 ### Prioridad 5 — Full Stack: Features Propios Pendientes
@@ -255,8 +263,21 @@ Cierre:
 frontend/src/types/index.ts
 ```
 
-Tipos actuales: `RecipeType`, `TaskStatus`, `BrandBrain`, `Client`, `Task`,
-`RunRecipeRequest`, `RunRecipeResponse`, `AnalyticsSummary`
+Tipos actuales: `RecipeType`, `ChannelType`, `SocialDraft`, `TaskStatus`, `BrandBrain`, `Client`,
+`Task`, `RunRecipeRequest`, `RunRecipeResponse`, `ApproveTaskResponse`, `ImportClientsResponse`,
+`AnalyticsSummary`
 
 Omar actualiza este archivo cada vez que un endpoint cambia su contrato.
 Jhamil no modifica los tipos — consulta a Omar si necesita un campo nuevo.
+
+### ✅ Contratos alineados con el backend real (2026-07-02)
+`frontend/src/lib/api.ts` ya coincide con las respuestas reales del backend y manda el JWT
+de Supabase automaticamente. Funciones listas para que Jhamil las use:
+
+- `importClients(file)` → `POST /api/onboarding/import-clients` (multipart) → `{ imported, skipped, columns_detected, errors }`
+- `runRecipe({ recipe_type, params })` → `{ task_id, status, draft_content, recipients, tokens_used, cost_usd, agent_score }`
+- `getTasks(limit?)` → `Task[]` (desenvuelve el `{ tasks }` del backend)
+- `approveTask(id)` → `{ status, emails_sent, emails_failed, errors }`
+- `getAnalytics()` → `AnalyticsSummary`
+
+> Ya NO se pasa `user_id`: sale del JWT. Todas requieren sesion Supabase activa.

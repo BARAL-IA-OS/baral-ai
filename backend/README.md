@@ -1,107 +1,125 @@
 # 🤖 Baral AI — Backend Engine
 
-Motor de ejecución de acciones de negocio e inteligencia artificial para la plataforma **Baral AI**. Desarrollado con FastAPI y optimizado para ejecutarse mediante `uv`.
+Motor de ejecución de acciones de negocio con IA para **Baral AI**. FastAPI + `uv`.
+**Backend Fase 1 (Prioridades 1-4): completo y probado contra servicios reales.**
 
 ---
 
-## 🛠 Stack Tecnológico
+## 🛠 Stack
 
-* **Lenguaje:** Python v3.14+
-* **Framework:** FastAPI v0.136+
-* **Gestor de Entorno:** `uv` (Astral)
-* **Orquestación IA:** OpenAI SDK (GPT-4o-mini) + Anthropic SDK (Claude Haiku como fallback)
-* **Proveedor Email:** Resend API
-* **Base de Datos:** Supabase (PostgreSQL + Auth SDK)
-* **Validación:** Pydantic v2
+* **Lenguaje:** Python 3.14+
+* **Framework:** FastAPI + Pydantic v2
+* **Entorno:** `uv` (Astral)
+* **IA (texto):** OpenAI `gpt-4o-mini` (primario) → Anthropic `claude-haiku-4-5` (fallback)
+* **Email:** Resend
+* **Base de datos / Auth:** Supabase (PostgreSQL + RLS, SDK de Python)
+
+> Si no hay API keys de IA, el pipeline usa un **fallback determinista local** (`provider: "stub"`, costo 0) para que el flujo funcione igual.
 
 ---
 
-## ⚙️ Variables de Entorno (`.env`)
+## 🔐 Autenticación
 
+Todos los endpoints bajo `/api/*` están protegidos. El frontend debe enviar el
+access_token de Supabase:
+
+```
+Authorization: Bearer <access_token>
+```
+
+La dependencia `get_current_user` (`dependencies/auth.py`) valida el token contra
+Supabase Auth y expone `user.id` / `user.email`. El `user_id` sale del JWT — **no** se
+pasa por query param. Como el backend usa `SUPABASE_SERVICE_KEY` (bypassa RLS), cada
+query filtra por `user_id` manualmente.
+
+---
+
+## ⚙️ Variables de entorno (`backend/.env`)
 
 ```env
-# Supabase (Base de Datos)
-SUPABASE_URL
-SUPABASE_SERVICE_KEY
+# Supabase
+SUPABASE_URL=
+SUPABASE_SERVICE_KEY=
 
-# LLM Providers (IA)
-OPENAI_API_KEY
-ANTHROPIC_API_KEY
+# IA (plan real). Vacías = fallback determinista local.
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
 
-# Email Service
-RESEND_API_KEY
+# Email (Resend)
+RESEND_API_KEY=
+RESEND_FROM=Baral AI <onboarding@resend.dev>
 
-# CORS / Clientes permitidos
-FRONTEND_URL
+# CORS
+FRONTEND_URL=http://localhost:5173
+
+# --- Solo PRUEBAS (opcional) ---
+# DeepSeek: compatible con el SDK de OpenAI; si está seteada, el pipeline la usa
+# PRIMERO (no cambia el plan real OpenAI+Anthropic).
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-chat
+# Redirige TODOS los emails a un correo (evita spamear clientes reales).
+TEST_EMAIL_OVERRIDE=
+# Tope de emails por ejecución (protege el límite diario gratuito de Resend).
+MAX_EMAILS_PER_RUN=25
 ```
+
+Nunca subir `.env`, `.venv`, `__pycache__` ni `*.pyc`.
+
+> ⚠️ **Resend sin dominio verificado** solo entrega al correo de la cuenta. Para enviar
+> a clientes reales, verifica un dominio en resend.com/domains y cambia `RESEND_FROM`.
+
 ---
 
-## 🚀 Puesta en Marcha (Desarrollo Local)
+## 🚀 Puesta en marcha
 
-### Opción A: Flujo moderno con `uv` (Recomendado)
-
-`uv` gestiona el entorno virtual, resuelve dependencias e instala todo automáticamente en milisegundos.
-
-1. Entra al directorio del servidor:
 ```bash
 cd backend
-
-```
-
-
-2. Levanta el servidor con recarga en caliente:
-```bash
 uv run fastapi dev
-
 ```
 
+Servidor en `http://localhost:8000` · Docs: `http://localhost:8000/docs`
 
+Verificación rápida:
 
----
-
-### Opción B: Flujo clásico (`venv` + `pip`)
-
-1. Posiciónate en la carpeta y crea el entorno virtual:
-```bash
-cd backend
-python -m venv venv
-
-```
-
-
-2. Activa el entorno en Windows (`venv\Scripts\activate`) o en Mac/Linux (`source venv/bin/activate`).
-3. Instala las dependencias y corre el servidor:
-```bash
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-
-```
-
-
-
----
-
-## 🧪 Verificación del Sistema (Smoke Tests)
-
-El servidor correrá por defecto en `http://localhost:8000`.
-
-* **Swagger UI (Docs interactivas):** [http://localhost:8000/docs](https://www.google.com/search?q=http://localhost:8000/docs)
-* **Comprobación de salud por terminal:**
 ```bash
 curl http://localhost:8000/health
-
 ```
 
+---
 
+## 📡 Endpoints (reales, no mock)
 
-### Endpoints Base (Fase Mock)
-
-| Método | Ruta | Descripción |
-| --- | --- | --- |
-| `GET` | `/health` | Devuelve el latido, versión y entorno del motor. |
-| `POST` | `/api/recipes/run` | Simula la generación de draft del pipeline de 3 agentes. |
-| `GET` | `/api/tasks` | Devuelve el array simulado de campañas recientes. |
-| `POST` | `/api/tasks/{id}/approve` | Simula la aprobación humana y gatillo de envío. |
-| `GET` | `/api/analytics/summary` | Entrega los KPIs agregados del dashboard superior. |
+| Método | Ruta | Auth | Descripción |
+| --- | --- | :---: | --- |
+| `GET`  | `/health` | — | Estado + `supabase_configured` |
+| `GET`  | `/api/me` | ✅ | Usuario del JWT (verifica el token) |
+| `POST` | `/api/onboarding/import-clients` | ✅ | Sube CSV (multipart), inserta en `clients` |
+| `POST` | `/api/recipes/run` | ✅ | Pipeline de 3 agentes → crea tarea `PENDING_APPROVAL` |
+| `GET`  | `/api/tasks?limit=20` | ✅ | Campañas del usuario |
+| `POST` | `/api/tasks/{id}/approve` | ✅ | Envía la campaña (Resend) → `COMPLETED` |
+| `GET`  | `/api/analytics/summary` | ✅ | KPIs agregados (contrato `AnalyticsSummary`) |
 
 ---
+
+## 🧠 Pipeline de IA (`services/` + `prompts/`)
+
+1. **Orquestador** — filtra clientes de la DB según la receta (dias_inactivo / postventa / registro).
+2. **Copywriter** — genera el email plantilla con marcadores `{{nombre}}`/`{{producto}}`.
+3. **Revisor** — puntúa 0-10 y verifica prohibiciones del Brand Brain; regenera 1 vez si score < 7.
+
+`llm_service.py` maneja el orden de proveedores: **DeepSeek (pruebas) → OpenAI → Anthropic → stub**,
+con registro de `tokens` y `cost_usd` por llamada.
+
+---
+
+## 📂 Estructura
+
+```text
+backend/
+├── main.py                 # FastAPI + CORS + routers
+├── config.py               # variables de entorno
+├── dependencies/auth.py    # verificación JWT (get_current_user)
+├── routers/                # health, auth, onboarding, recipes, tasks, analytics
+├── services/               # db_service, llm_service, agent_pipeline, email_service
+└── prompts/                # copywriter, reviewer, orchestrator
+```

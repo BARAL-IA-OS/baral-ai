@@ -72,13 +72,16 @@ Hecho:
 - [x] `GET /api/tasks` y `GET /api/analytics/summary` (reales, filtrados por JWT).
 - [x] Pipeline de 3 agentes (`llm_service.py`, `agent_pipeline.py`, prompts) + `POST /api/recipes/run`.
       OpenAI `gpt-4o-mini` -> fallback Claude Haiku 4.5; fallback determinista sin keys.
+- [x] `email_service.py` (Resend) + `POST /api/tasks/{id}/approve` — envio real, probado E2E.
 
-Pendiente (backend reasignado de Saul):
-- [ ] `POST /api/recipes/run`.
-- [ ] `email_service.py` con Resend + `POST /api/tasks/{id}/approve`.
+**Backend Fase 1 (Prioridades 1-4): COMPLETO.**
+
+Pendiente:
 - [ ] `POST /api/content/generate` (texto + imagen por canal) para el Estudio.
 - [ ] Modelo de imagen para imagenes/infografias (sin video IA en esta fase).
 - [ ] Agregar `website_url` opcional a Brand Brain.
+- [ ] Verificar un dominio en Resend para enviar a clientes reales (hoy solo entrega al correo de la cuenta).
+- [ ] Desplegar backend + integrar con el frontend.
 
 ### Jhamil - Frontend
 
@@ -123,7 +126,13 @@ Contratos actuales:
 - `Task`
 - `RunRecipeRequest`
 - `RunRecipeResponse`
+- `ApproveTaskResponse`
+- `ImportClientsResponse`
 - `AnalyticsSummary`
+
+> `frontend/src/lib/api.ts` ya esta alineado con las respuestas reales del backend y manda el
+> JWT de Supabase (`Authorization: Bearer`). Funciones listas: `importClients`, `runRecipe`,
+> `getTasks`, `approveTask`, `getAnalytics`. El `user_id` sale del JWT (ya no se pasa por query).
 
 Endpoints esperados:
 
@@ -174,13 +183,19 @@ SUPABASE_SERVICE_KEY=
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 RESEND_API_KEY=
+RESEND_FROM=Baral AI <onboarding@resend.dev>
 FRONTEND_URL=http://localhost:5173
 
 # Solo PRUEBAS (opcional): DeepSeek, compatible con el SDK de OpenAI.
 # Si esta seteada, el pipeline la usa primero; no cambia el plan real (OpenAI+Anthropic).
 DEEPSEEK_API_KEY=
 DEEPSEEK_MODEL=deepseek-chat
+# Solo PRUEBAS: redirige TODOS los emails a un correo; tope de envios por ejecucion.
+TEST_EMAIL_OVERRIDE=
+MAX_EMAILS_PER_RUN=25
 ```
+
+> ⚠️ Resend sin dominio verificado solo entrega al correo de la cuenta. Ver `backend/README.md`.
 
 Nunca subir `.env`, `.env.local`, `.venv`, `__pycache__` ni `*.pyc`.
 
@@ -252,13 +267,14 @@ HAVING COUNT(*) > 1;
 
 ## Pendientes Prioritarios
 
-- [ ] Omar: cerrar `GET /health` + JWT + conexion Supabase.
-- [ ] Omar: entregar endpoints (import-clients, tasks, analytics) para desbloquear integracion.
-- [ ] Omar: pipeline de IA + `POST /api/recipes/run`.
-- [ ] Omar: Resend + `POST /api/tasks/{id}/approve`.
-- [ ] Omar: `POST /api/content/generate` + modelo de imagen (Estudio).
-- [ ] Jhamil: conectar UI a endpoints reales conforme se entreguen.
-- [ ] Omar/Jhamil: probar Brand Brain guardado en una cuenta nueva.
+> Backend Fase 1 (Prioridades 1-4) COMPLETO y probado contra servicios reales. Sigue:
+
+- [ ] Jhamil: conectar la UI a los endpoints reales (contratos ya listos en `lib/api.ts`).
+- [ ] Omar: `POST /api/content/generate` + modelo de imagen (Estudio multicanal).
+- [ ] Omar: campo `website_url` opcional en Brand Brain.
+- [ ] Omar: verificar dominio en Resend para enviar a clientes reales (hoy solo al correo de la cuenta).
+- [ ] Omar/Jhamil: correr todo local end-to-end y probar en el navegador.
+- [ ] Deploy: frontend en Vercel + backend (Railway o similar).
 
 ## Idea Propuesta: Website URL
 
