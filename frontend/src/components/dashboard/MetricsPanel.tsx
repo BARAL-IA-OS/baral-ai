@@ -1,14 +1,23 @@
+import { useEffect, useState } from 'react'
 import { Card } from '../ui/Card'
 import { Megaphone, Mail, Zap, Star } from 'lucide-react'
-
-const metrics = [
-  { label: 'Campañas',      value: '0',     Icon: Megaphone, tone: 'violet', line: 'metric-line-one' },
-  { label: 'Emails enviados', value: '0',   Icon: Mail,      tone: 'indigo', line: 'metric-line-two' },
-  { label: 'Costo total',   value: '$0.00', Icon: Zap,       tone: 'pink',   line: 'metric-line-three' },
-  { label: 'Score promedio', value: '-',    Icon: Star,      tone: 'blue',   line: 'metric-line-four' },
-] as const
+import { getAnalytics } from '../../lib/api'
+import type { AnalyticsSummary } from '../../types'
 
 export function MetricsPanel() {
+  const [data, setData] = useState<AnalyticsSummary | null>(null)
+
+  useEffect(() => {
+    getAnalytics().then(setData).catch(() => undefined)
+  }, [])
+
+  const metrics = [
+    { label: 'Campañas',        value: data ? String(data.total_tasks) : '–',                     Icon: Megaphone, tone: 'violet', line: 'metric-line-one' },
+    { label: 'Completadas',     value: data ? String(data.completed_tasks) : '–',                 Icon: Mail,      tone: 'indigo', line: 'metric-line-two' },
+    { label: 'Costo total',     value: data ? `$${data.total_cost_usd.toFixed(4)}` : '$–',        Icon: Zap,       tone: 'pink',   line: 'metric-line-three' },
+    { label: 'Score promedio',  value: data ? (data.average_agent_score || '–').toString() : '–',  Icon: Star,      tone: 'blue',   line: 'metric-line-four' },
+  ]
+
   return (
     <section className="metrics-grid">
       {metrics.map((metric) => (
@@ -28,3 +37,4 @@ export function MetricsPanel() {
     </section>
   )
 }
+

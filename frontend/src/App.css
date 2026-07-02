@@ -431,19 +431,101 @@
 
 /* ── Spinner ────────────────────────────────────────────────────── */
 
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  width: 100%;
+}
+
 .spinner {
   display: inline-block;
-  width: 22px;
-  height: 22px;
-  margin: 32px;
-  border: 2px solid var(--border);
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid var(--border);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
+.spinner-label {
+  font-size: 0.85rem;
+  color: var(--text-muted, #888);
+  opacity: 0.8;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ── Empty state ───────────────────────────────────────────────── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.empty-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+}
+
+.empty-state strong {
+  font-size: 1rem;
+  color: var(--text, #fff);
+}
+
+.empty-state p {
+  font-size: 0.875rem;
+  color: var(--text-muted, #888);
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+.empty-state a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+.empty-state a:hover {
+  text-decoration: underline;
+}
+
+/* ── Error banner ──────────────────────────────────────────────── */
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 /* ── Metrics grid ───────────────────────────────────────────────── */

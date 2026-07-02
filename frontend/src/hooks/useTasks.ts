@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getTasks } from '../lib/api'
+import { getTasks, parseApiError } from '../lib/api'
 import type { Task } from '../types'
 
 export function useTasks() {
@@ -11,10 +11,11 @@ export function useTasks() {
     getTasks()
       .then(setTasks)
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Could not load tasks')
+        setError(parseApiError(err))
       })
       .finally(() => setLoading(false))
   }, [])
 
   return { tasks, loading, error }
 }
+

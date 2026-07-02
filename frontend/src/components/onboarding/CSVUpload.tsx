@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { AppIcon } from '../ui/AppIcon'
-import { importClients } from '../../lib/api'
+import { importClients, parseApiError } from '../../lib/api'
 
 interface CSVRow {
   [key: string]: string
@@ -128,7 +128,7 @@ export function CSVUpload() {
         setError(res.errors?.join(', ') ?? 'Error al importar los clientes.')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al conectar con el servidor.')
+      setError(parseApiError(err))
     } finally {
       setImporting(false)
     }

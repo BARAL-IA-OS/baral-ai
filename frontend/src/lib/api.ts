@@ -83,3 +83,23 @@ export async function importClients(file: File): Promise<ImportClientsResponse> 
 
   return res.json() as Promise<ImportClientsResponse>
 }
+
+// --- Utilidad: parsear errores de la API ---
+
+/**
+ * Extrae un mensaje legible de un error de la API.
+ * El backend de FastAPI devuelve `{"detail":"..."}` en errores HTTP.
+ * Sin esto, el usuario ve JSON crudo como `{"detail":"Not Found"}`.
+ */
+export function parseApiError(err: unknown): string {
+  if (!(err instanceof Error)) return 'Error desconocido.'
+  const raw = err.message
+  try {
+    const parsed = JSON.parse(raw) as { detail?: string }
+    if (parsed.detail) return parsed.detail
+  } catch {
+    // No es JSON, usar el mensaje tal cual
+  }
+  if (raw === 'Failed to fetch') return 'No se pudo conectar con el servidor.'
+  return raw || 'Error desconocido.'
+}
