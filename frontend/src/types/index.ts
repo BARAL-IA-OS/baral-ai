@@ -153,3 +153,15 @@ export interface GenerateContentResponse {
   provider?: string
 }
 
+export interface SavedStrategy {
+  id: string
+  user_id: string
+  name: string
+  recipe_type: RecipeType
+  params: Record<string, any>
+  times_used: number
+  last_used_at?: string
+  created_at: string
+}
+
+

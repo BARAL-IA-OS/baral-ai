@@ -1,6 +1,7 @@
 import { ActionCard } from '../components/dashboard/ActionCard'
 import { MetricsPanel } from '../components/dashboard/MetricsPanel'
 import { RecentTasks } from '../components/dashboard/RecentTasks'
+import { SavedStrategies } from '../components/dashboard/SavedStrategies'
 
 const recipes = [
   ['Reactivar clientes', 'Clientes inactivos según días sin compra.', 'reactivacion'],
@@ -18,6 +19,7 @@ export function Dashboard() {
         <p>Recetas de acción para generar y enviar campañas con IA.</p>
       </div>
       <MetricsPanel />
+      
       <section className="recipes-grid">
         {recipes.map(([title, description, type]) => (
           <ActionCard
@@ -28,7 +30,11 @@ export function Dashboard() {
           />
         ))}
       </section>
+
+      <SavedStrategies />
+
       <RecentTasks />
     </section>
   )
 }
+

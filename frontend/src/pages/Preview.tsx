@@ -1,10 +1,10 @@
 import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useTask } from '../hooks/useTask'
-import { approveTask, parseApiError, regenerateTaskField } from '../lib/api'
+import { approveTask, parseApiError, regenerateTaskField, createStrategy } from '../lib/api'
 import { TaskStatusBadge } from '../components/history/TaskStatusBadge'
 import { Spinner } from '../components/ui/Spinner'
-import { Sparkles, RefreshCw, CheckCircle, ArrowRight, Laptop, Smartphone } from 'lucide-react'
+import { Sparkles, RefreshCw, CheckCircle, ArrowRight, Laptop, Smartphone, Bookmark } from 'lucide-react'
 import { EmailPreviewMock } from '../components/preview/EmailPreviewMock'
 import { getBrandBrain } from '../hooks/useBrandBrain'
 import type { TaskDraftContent, TaskStatus } from '../types'
@@ -23,6 +23,13 @@ export function Preview() {
   const [brandName, setBrandName] = useState<string>('Nuestra Empresa')
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'mobile'>('desktop')
 
+  // Strategy states
+  const [strategySaved, setStrategySaved] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [strategyName, setStrategyName] = useState('')
+  const [savingStrategy, setSavingStrategy] = useState(false)
+  const [strategyError, setStrategyError] = useState<string | null>(null)
+
   // Load Brand Brain to get company name
   useEffect(() => {
     getBrandBrain()
@@ -33,6 +40,32 @@ export function Preview() {
       })
       .catch(() => undefined)
   }, [])
+
+  // Auto-generate a default strategy name
+  useEffect(() => {
+    if (!task) return
+    const recipeLabel = task.recipe_type.charAt(0).toUpperCase() + task.recipe_type.slice(1)
+    const paramDetail = task.params?.dias ? ` - ${task.params.dias} días` : ''
+    setStrategyName(`${recipeLabel}${paramDetail}`)
+  }, [task])
+
+  const handleSaveStrategy = async () => {
+    if (!taskId || !strategyName.trim()) return
+    setSavingStrategy(true)
+    setStrategyError(null)
+    try {
+      const res = await createStrategy(strategyName, taskId)
+      if (res.success) {
+        setStrategySaved(true)
+        setIsModalOpen(false)
+      }
+    } catch (err) {
+      setStrategyError(parseApiError(err))
+    } finally {
+      setSavingStrategy(false)
+    }
+  }
+
 
 
   // Sync draft & status when task loads (deferred to avoid set-state-in-effect)
@@ -142,19 +175,91 @@ export function Preview() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', width: '100%', maxWidth: '400px' }}>
-            <Link to="/history" className="button" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              Ver en Historial
-            </Link>
-            <Link to="/analytics" className="button button-primary" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-              Ir a Analíticas
-              <ArrowRight size={14} />
-            </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '400px' }}>
+            {strategySaved ? (
+              <div className="badge badge-success" style={{ padding: '0.75rem', width: '100%', display: 'flex', justifyContent: 'center', fontSize: '0.85rem', gap: '6px' }}>
+                <CheckCircle size={15} />
+                <span>Estrategia Guardada con éxito</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => setIsModalOpen(true)}
+                style={{ width: '100%', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                <Bookmark size={15} />
+                <span>Guardar como estrategia</span>
+              </button>
+            )}
+
+            <div style={{ display: 'flex', gap: '1rem', width: '100%', marginTop: '0.25rem' }}>
+              <Link to="/history" className="button" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                Ver en Historial
+              </Link>
+              <Link to="/analytics" className="button button-primary" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                Ir a Analíticas
+                <ArrowRight size={14} />
+              </Link>
+            </div>
           </div>
         </div>
+
+        {/* Modal para Guardar Estrategia */}
+        {isModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal-content card stack" style={{ maxWidth: '400px', width: '90%', padding: '1.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem' }}>Guardar como Estrategia</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Guarda la configuración de esta receta para volver a ejecutarla rápidamente desde el Dashboard con un solo clic.
+              </p>
+
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <span>Nombre de la estrategia</span>
+                <input
+                  type="text"
+                  value={strategyName}
+                  onChange={(e) => setStrategyName(e.target.value)}
+                  placeholder="Ej. Reactivación 60 días - Verano"
+                  disabled={savingStrategy}
+                  autoFocus
+                />
+              </label>
+
+              {strategyError && (
+                <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: 0 }}>⚠ {strategyError}</p>
+              )}
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="button"
+                  disabled={savingStrategy}
+                  onClick={() => {
+                    setIsModalOpen(false)
+                    setStrategyError(null)
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="button button-primary"
+                  disabled={savingStrategy || !strategyName.trim()}
+                  onClick={() => void handleSaveStrategy()}
+                  style={{ flex: 1 }}
+                >
+                  {savingStrategy ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     )
   }
+
 
   return (
     <section className="page stack">

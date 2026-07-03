@@ -10,6 +10,7 @@ import type {
   Task,
   TaskDraftContent,
   RegenerateTaskResponse,
+  SavedStrategy,
 } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -113,6 +114,23 @@ export function regenerateTaskField(
   return request(`/api/tasks/${taskId}/regenerate`, {
     method: 'POST',
     body: JSON.stringify({ field, current_draft: currentDraft }),
+  })
+}
+
+export function getStrategies(): Promise<{ strategies: SavedStrategy[] }> {
+  return request('/api/strategies')
+}
+
+export function createStrategy(name: string, taskId: string): Promise<{ success: boolean; strategy: SavedStrategy }> {
+  return request('/api/strategies', {
+    method: 'POST',
+    body: JSON.stringify({ name, task_id: taskId }),
+  })
+}
+
+export function deleteStrategy(id: string): Promise<{ success: boolean }> {
+  return request(`/api/strategies/${id}`, {
+    method: 'DELETE',
   })
 }
 

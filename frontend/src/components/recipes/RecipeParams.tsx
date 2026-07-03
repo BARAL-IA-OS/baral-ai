@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '../ui/Button'
 import { useRecipeRunner } from '../../hooks/useRecipeRunner'
 import type { RecipeType } from '../../types'
@@ -12,6 +12,15 @@ export function RecipeParams({ type }: RecipeParamsProps) {
   const [days, setDays] = useState(60)
   const { run, runnerStatus, taskStatus, taskId, message, error } = useRecipeRunner()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Pre-load parameters from strategy when redirected
+  useEffect(() => {
+    const state = location.state as { params?: { dias?: number } } | null
+    if (state?.params?.dias) {
+      setDays(state.params.dias)
+    }
+  }, [location])
 
   // Auto-navigate to preview when the task is ready
   useEffect(() => {
@@ -26,6 +35,7 @@ export function RecipeParams({ type }: RecipeParamsProps) {
   async function handleRun() {
     await run(type, { dias: days })
   }
+
 
   const busy = runnerStatus !== 'idle'
 
