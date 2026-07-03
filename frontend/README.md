@@ -60,6 +60,8 @@ y están alineadas con el backend real:
 | `approveTask(id, draft?)` | `POST /api/tasks/{id}/approve` | `{ status, emails_sent, emails_failed, errors }` |
 | `getAnalytics()` | `GET /api/analytics/summary` | `AnalyticsSummary` |
 | `generateContent({ prompt, channels? })` | `POST /api/content/generate` | `{ items: ContentItem[], tokens_used, cost_usd }` — Estudio |
+| `generateImage(prompt)` | `POST /api/content/image` | `{ image_url, image_b64, cost_usd, tokens }` — usa `image_url` (Supabase Storage) |
+| `getUsage()` | `GET /api/usage/summary` | `{ total_cost_usd, by_kind, ... }` — gasto de generación |
 
 `approveTask` acepta el draft editado (Human Gate): si se pasa, el backend lo persiste y envía eso.
 

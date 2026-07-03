@@ -217,8 +217,17 @@
       Probado real con DeepSeek (5 canales, ~$0.0006).
       **Para Jhamil:** contrato tipado listo en `frontend/src/lib/api.ts` → `generateContent({ prompt, channels? })`
       y tipos `ContentItem` / `GenerateContentResponse` en `types/index.ts`. Solo conectar la UI del Estudio.
-- [ ] Integrar **modelo de imagen** (gpt-image-1 / DALL·E 3 / Flux) para imagenes e infografias
-      (~$0.01–0.04 por imagen; NO video IA en esta fase). Hoy `media_alt` describe la imagen a generar.
+- [x] **Modelo de imagen** ✅ (2026-07-02) — `POST /api/content/image` con OpenAI `gpt-image-1`
+      (calidad `low`), **bajo demanda** (una a la vez) para cuidar el saldo. Probado real: **$0.011/imagen**.
+      - La imagen se **guarda en Supabase Storage** (bucket publico `content-images`) → devuelve `image_url`.
+      - **Costo real** calculado desde `usage` (tokens), no estimado.
+      - Decision documentada en `doc/llm_image.md`.
+      **Para Jhamil:** `generateImage(mediaAlt)` en `api.ts` → mostrar `image_url` en el mockup del Estudio.
+- [x] **Registro de gasto** ✅ — `usage_service` registra cada generacion (texto + imagen) en `usage_events`.
+      `GET /api/usage/summary` (`getUsage`) devuelve el total gastado y desglose por tipo.
+      ⚠️ **Pendiente Omar:** correr `doc/sql_usage_events.sql` en Supabase para activar el registro
+      (hasta entonces degrada silencioso: no rompe nada, pero no acumula). Para Jhamil: `getUsage()` para
+      mostrar "gastado en generacion" en la plataforma.
 - [ ] Persistencia de campañas: tabla `campaigns` (o reutilizar `tasks` con columna `channel`)
 - [ ] Email se mantiene como el unico canal que se **ENVIA** de verdad (Resend); el resto = generar + preview
 

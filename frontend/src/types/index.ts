@@ -144,3 +144,21 @@ export interface GenerateContentResponse {
   cost_usd: number
   provider?: string
 }
+
+// Imagen generada bajo demanda. Usa `image_url`; si es null, `image_b64` como fallback.
+export interface GenerateImageResponse {
+  success: boolean
+  image_url: string | null
+  image_b64: string | null
+  cost_usd: number
+  tokens: number
+  provider?: string
+}
+
+// Resumen de gasto de generación del usuario (texto + imagen).
+export interface UsageSummary {
+  total_cost_usd: number
+  total_events: number
+  by_kind: Record<string, { count: number; cost_usd: number; tokens: number }>
+  available: boolean
+}

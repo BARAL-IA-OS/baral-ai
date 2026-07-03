@@ -4,11 +4,13 @@ import type {
   ApproveTaskResponse,
   GenerateContentRequest,
   GenerateContentResponse,
+  GenerateImageResponse,
   ImportClientsResponse,
   RunRecipeRequest,
   RunRecipeResponse,
   Task,
   TaskDraftContent,
+  UsageSummary,
 } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -81,6 +83,20 @@ export function generateContent(
     method: 'POST',
     body: JSON.stringify(body),
   })
+}
+
+// Genera UNA imagen bajo demanda (prompt = media_alt del canal).
+export function generateImage(prompt: string): Promise<GenerateImageResponse> {
+  return request('/api/content/image', {
+    method: 'POST',
+    body: JSON.stringify({ prompt }),
+  })
+}
+
+// --- Gasto de generación (registro de costos) ---
+
+export function getUsage(): Promise<UsageSummary> {
+  return request('/api/usage/summary')
 }
 
 // --- Onboarding: importar clientes desde CSV (multipart) ---

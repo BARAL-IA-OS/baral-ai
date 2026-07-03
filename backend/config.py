@@ -5,6 +5,11 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+
+# Generacion de imagenes (OpenAI Images). Defaults economicos para cuidar el saldo.
+OPENAI_IMAGE_MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
+OPENAI_IMAGE_SIZE = os.getenv("OPENAI_IMAGE_SIZE", "1024x1024")
+OPENAI_IMAGE_QUALITY = os.getenv("OPENAI_IMAGE_QUALITY", "low")
 RESEND_FROM = os.getenv("RESEND_FROM", "Baral AI <onboarding@resend.dev>")
 # Solo pruebas: si esta seteada, todos los emails se redirigen a esta direccion.
 TEST_EMAIL_OVERRIDE = os.getenv("TEST_EMAIL_OVERRIDE")

@@ -74,11 +74,16 @@ Hecho:
       OpenAI `gpt-4o-mini` -> fallback Claude Haiku 4.5; fallback determinista sin keys.
 - [x] `email_service.py` (Resend) + `POST /api/tasks/{id}/approve` — envio real, probado E2E.
 - [x] `POST /api/content/generate` (Estudio) — texto por canal desde prompt + Brand Brain (una sola llamada LLM). Contrato tipado listo en `api.ts` (`generateContent`).
+- [x] `POST /api/content/image` (Estudio) — imagen con OpenAI `gpt-image-1` bajo demanda (`generateImage`).
+      Se guarda en **Supabase Storage** (bucket `content-images`) → devuelve `image_url`. Costo real desde `usage`. Probado (~$0.011/imagen).
+- [x] **Registro de gasto:** `usage_service` + `GET /api/usage/summary` (`getUsage`). Cada generación (texto/imagen) registra costo.
+      Requiere crear la tabla `usage_events` en Supabase (`doc/sql_usage_events.sql`).
 
-**Backend Fase 1 (Prioridades 1-4): COMPLETO.**
+**Backend Fase 1 (Prioridades 1-4): COMPLETO.** Estudio (texto + imagen) listo en backend.
 
 Pendiente:
-- [ ] Modelo de imagen para el Estudio (hoy `content/generate` devuelve `media_alt`, la descripcion; falta generar la imagen).
+- [ ] **Correr `doc/sql_usage_events.sql` en Supabase** para activar el registro de gasto.
+- [ ] Persistencia de campañas del Estudio (tabla `campaigns` o reutilizar `tasks` con `channel`).
 - [ ] Agregar `website_url` opcional a Brand Brain.
 - [ ] Verificar un dominio en Resend para enviar a clientes reales (hoy solo entrega al correo de la cuenta).
 - [ ] Desplegar backend + integrar con el frontend.
@@ -148,7 +153,9 @@ GET  /api/tasks
 GET  /api/tasks/{taskId}             # detalle (para el Preview)
 POST /api/tasks/{taskId}/approve     # acepta draft_content editado (Human Gate)
 GET  /api/analytics/summary
-POST /api/content/generate          # texto por canal (Estudio) — LISTO (imagen pendiente)
+POST /api/content/generate          # texto por canal (Estudio) — LISTO
+POST /api/content/image             # imagen por demanda, OpenAI gpt-image-1 — LISTO
+GET  /api/usage/summary             # gasto de generacion del usuario — LISTO (requiere tabla usage_events)
 POST /api/strategies                # Feature A: Mis Estrategias (Sprint 2) — PENDIENTE
 GET  /api/strategies
 DELETE /api/strategies/{id}
@@ -253,7 +260,12 @@ Tablas actuales:
 - [x] `brand_brain`
 - [x] `clients`
 - [x] `tasks`
+- [ ] `usage_events` (registro de gasto de generacion — correr `doc/sql_usage_events.sql`)
 - [ ] `saved_strategies` (Feature A, Sprint 2)
+
+Storage:
+
+- [x] Bucket publico `content-images` (imagenes del Estudio; se crea solo al generar la primera)
 
 Seguridad:
 

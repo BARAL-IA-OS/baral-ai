@@ -6,6 +6,7 @@ from dependencies.auth import CurrentUser, get_current_user
 from prompts.orchestrator import RECIPES
 from services.agent_pipeline import run_pipeline
 from services.db_service import get_supabase
+from services.usage_service import log_usage
 
 router = APIRouter(tags=["Recipes"])
 
@@ -47,6 +48,9 @@ async def run_recipe(request: RunRecipeRequest, user: CurrentUser = Depends(get_
     except Exception as exc:
         sb.table("tasks").update({"status": "FAILED", "error_log": str(exc)}).eq("id", task_id).execute()
         raise HTTPException(status_code=500, detail=f"Error en el pipeline de IA: {exc}") from exc
+
+    # Registra el gasto de generacion del pipeline.
+    log_usage(user.id, kind="text", provider=result.get("provider", ""), cost_usd=result["cost_usd"], tokens=result["tokens_used"])
 
     # Persiste el resultado -> PENDING_APPROVAL (espera aprobacion humana)
     sb.table("tasks").update(

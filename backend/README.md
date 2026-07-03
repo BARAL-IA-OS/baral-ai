@@ -49,6 +49,11 @@ ANTHROPIC_API_KEY=
 RESEND_API_KEY=
 RESEND_FROM=Baral AI <onboarding@resend.dev>
 
+# Imagen (OpenAI Images). Usa OPENAI_API_KEY. Defaults economicos:
+OPENAI_IMAGE_MODEL=gpt-image-1
+OPENAI_IMAGE_SIZE=1024x1024
+OPENAI_IMAGE_QUALITY=low
+
 # CORS
 FRONTEND_URL=http://localhost:5173
 
@@ -100,6 +105,8 @@ curl http://localhost:8000/health
 | `POST` | `/api/tasks/{id}/approve` | ✅ | Envía la campaña (Resend) → `COMPLETED`. Acepta `draft_content` editado (Human Gate): lo persiste y lo usa para el envío |
 | `GET`  | `/api/analytics/summary` | ✅ | KPIs agregados (contrato `AnalyticsSummary`) |
 | `POST` | `/api/content/generate` | ✅ | Estudio: genera texto por canal (email/whatsapp/instagram/facebook/tiktok) desde el prompt + Brand Brain |
+| `POST` | `/api/content/image` | ✅ | Estudio: genera UNA imagen (OpenAI `gpt-image-1`) bajo demanda. La guarda en Supabase Storage y devuelve `image_url` + costo real |
+| `GET`  | `/api/usage/summary` | ✅ | Gasto de generación del usuario (texto + imagen). Requiere la tabla `usage_events` (ver `doc/sql_usage_events.sql`) |
 
 ---
 
