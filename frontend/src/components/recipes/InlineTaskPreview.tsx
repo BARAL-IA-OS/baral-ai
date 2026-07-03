@@ -6,13 +6,14 @@ import { useTask } from '../../hooks/useTask'
 import { TaskStatusBadge } from '../history/TaskStatusBadge'
 import { EmailPreviewMock } from '../preview/EmailPreviewMock'
 import { Spinner } from '../ui/Spinner'
-import type { TaskDraftContent, TaskStatus } from '../../types'
+import type { Client, TaskDraftContent, TaskStatus } from '../../types'
 
 interface InlineTaskPreviewProps {
   taskId: string
+  onReady?: () => void
 }
 
-export function InlineTaskPreview({ taskId }: InlineTaskPreviewProps) {
+export function InlineTaskPreview({ taskId, onReady }: InlineTaskPreviewProps) {
   const { task, loading, error, refetch } = useTask(taskId)
   const [draft, setDraft] = useState<TaskDraftContent>({ asunto: '', saludo: '', cuerpo: '', cta: '' })
   const [localStatus, setLocalStatus] = useState<TaskStatus | null>(null)
@@ -21,6 +22,7 @@ export function InlineTaskPreview({ taskId }: InlineTaskPreviewProps) {
   const [approving, setApproving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [regeneratingField, setRegeneratingField] = useState<'asunto' | 'saludo' | 'cuerpo' | 'cta' | null>(null)
+  const [showRecipients, setShowRecipients] = useState(false)
 
   useEffect(() => {
     getBrandBrain()
@@ -35,8 +37,9 @@ export function InlineTaskPreview({ taskId }: InlineTaskPreviewProps) {
     Promise.resolve().then(() => {
       if (task.draft_content) setDraft(task.draft_content)
       setLocalStatus(task.status)
+      onReady?.()
     })
-  }, [task])
+  }, [task, onReady])
 
   async function handleRegenerate(field: 'asunto' | 'saludo' | 'cuerpo' | 'cta') {
     setRegeneratingField(field)
@@ -143,23 +146,69 @@ export function InlineTaskPreview({ taskId }: InlineTaskPreviewProps) {
         </div>
       </div>
 
-      <div className="recipe-audit-row">
-        <span><strong>{task.agent_score ?? '-'}/10</strong><small>Score IA</small></span>
-        <span><strong>${task.cost_usd.toFixed(5)}</strong><small>Costo</small></span>
-        <span><strong>{recipientCount}</strong><small>Destinatarios</small></span>
+      <div className="recipe-audit-bar">
+        <span><strong>{task.agent_score ?? '-'}/10</strong> Score IA</span>
+        <span className="recipe-audit-dot" />
+        <span><strong>${task.cost_usd.toFixed(5)}</strong> Costo</span>
+        <span className="recipe-audit-dot" />
+        <button type="button" className="recipe-audit-btn" onClick={() => setShowRecipients(true)}>
+          <strong>{recipientCount}</strong> Destinatarios (Ver lista)
+        </button>
       </div>
 
       {status === 'PENDING_APPROVAL' && (
-        <button type="button" className="button button-primary recipe-approve-btn" disabled={approving || regeneratingField !== null} onClick={() => void handleApprove()}>
-          {approving ? <RefreshCw size={16} className="spin-icon" /> : <Send size={16} />}
-          {approving ? 'Enviando...' : 'Aprobar y enviar campaña'}
-        </button>
+        <div className="recipe-approve-wrap">
+          {recipientCount === 0 && (
+            <div className="recipe-warning-banner">
+              ⚠️ No hay clientes que cumplan con la condición. Importa más clientes o cambia la configuración.
+            </div>
+          )}
+          <button type="button" className="button button-primary recipe-approve-btn" disabled={approving || regeneratingField !== null || recipientCount === 0} onClick={() => void handleApprove()}>
+            {approving ? <RefreshCw size={16} className="spin-icon" /> : <Send size={16} />}
+            {approving ? 'Enviando...' : 'Aprobar y enviar campaña'}
+          </button>
+        </div>
       )}
 
       {(status === 'APPROVED' || status === 'COMPLETED') && (
         <div className="badge badge-success recipe-approved">
           <CheckCircle size={15} />
           Campaña aprobada
+        </div>
+      )}
+
+      {showRecipients && (
+        <div className="modal-overlay" onClick={() => setShowRecipients(false)}>
+          <div className="modal-content recipe-recipients-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Destinatarios seleccionados</h2>
+              <button type="button" className="modal-close" onClick={() => setShowRecipients(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {recipientCount === 0 ? (
+                <p className="text-muted">No se encontraron clientes para esta campaña.</p>
+              ) : (
+                <div className="clients-table-wrap">
+                  <table className="clients-table">
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(task.recipients ?? []).map((client: Client) => (
+                        <tr key={client.id}>
+                          <td className="clients-name">{client.nombre}</td>
+                          <td>{client.email}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </section>

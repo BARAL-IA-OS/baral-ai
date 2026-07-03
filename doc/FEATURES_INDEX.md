@@ -409,6 +409,11 @@ Lista de todas las acciones ejecutadas. Por cada campaña:
 - Costo en USD
 - Botón "Ver detalle" → muestra el contenido exacto enviado
 
+**Estado implementado (2026-07-03):**
+- Historial rediseñado con cards por acción, filtros y resumen superior.
+- Fuente unificada: recetas ejecutadas desde `tasks` + campañas generadas en Estudio desde `studio_campaigns`.
+- Las recetas navegan a `/preview/:id`; las campañas de Estudio navegan a `/studio`.
+
 ---
 
 ### 5.2 — Panel de Analíticas
@@ -581,9 +586,12 @@ La página **Estudio** (`/studio`) es donde el usuario crea contenido. Layout de
 - La lista "Mis campañas" tiene su **propio scroll**; el prompt queda fijo arriba.
 - En pantallas angostas, la preview pasa arriba y la página scrollea normal.
 
-**Estado actual (frontend):** la generación arma el contenido en el cliente como placeholder.
-**Pendiente backend (Omar):** conectar el prompt al pipeline de IA que devuelva
-`{ texto, hashtags, cta, imagen }` por canal, y persistir las campañas del usuario.
+**Estado implementado (2026-07-03):**
+- `Studio.tsx` llama a `generateContent({ prompt, channels })` y `generateImage(mediaAlt)`.
+- La imagen real se renderiza cuando el backend devuelve `image_url` o `image_b64`; si falla, se mantiene placeholder.
+- Las campañas se guardan en Supabase (`studio_campaigns`) y sobreviven al recargar.
+- Eliminar una campaña desde Studio también la elimina de Supabase.
+- El Historial ya incluye estas campañas como acciones de tipo "Estudio".
 
 ---
 

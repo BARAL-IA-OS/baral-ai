@@ -37,7 +37,11 @@ function parseCSV(text: string): ParseResult {
   return { headers, rows, total: rows.length }
 }
 
-export function CSVUpload() {
+export interface CSVUploadProps {
+  onSuccess?: () => void
+}
+
+export function CSVUpload({ onSuccess }: CSVUploadProps = {}) {
   const [rawFile, setRawFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
@@ -124,6 +128,7 @@ export function CSVUpload() {
           `${res.imported} clientes importados correctamente` +
           (res.skipped > 0 ? ` - ${res.skipped} filas omitidas` : ''),
         )
+        onSuccess?.()
       } else {
         setError(res.errors?.join(', ') ?? 'Error al importar los clientes.')
       }

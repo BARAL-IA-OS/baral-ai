@@ -51,6 +51,7 @@ export interface Client {
   telefono?: string
   ultima_compra?: string
   producto?: string
+  created_at?: string
 }
 
 export interface TaskDraftContent {

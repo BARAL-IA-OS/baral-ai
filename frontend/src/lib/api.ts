@@ -3,6 +3,7 @@ import type {
   AnalyticsSummary,
   ApproveTaskResponse,
   BrandExtractResponse,
+  Client,
   GenerateContentRequest,
   GenerateContentResponse,
   GenerateImageResponse,
@@ -171,6 +172,18 @@ export function createStrategy(name: string, taskId: string): Promise<{ success:
 
 export function deleteStrategy(id: string): Promise<{ success: boolean }> {
   return request(`/api/strategies/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+// --- Clientes ---
+
+export function getClients(): Promise<{ clients: Client[] }> {
+  return request('/api/clients')
+}
+
+export function deleteClient(id: string): Promise<{ success: boolean }> {
+  return request(`/api/clients/${id}`, {
     method: 'DELETE',
   })
 }

@@ -16,16 +16,16 @@ const recipeCopy: Record<RecipeType, { title: string; description: string; actio
   bienvenida: {
     title: 'Bienvenida',
     description: 'Prepara el primer contacto para nuevos clientes con el tono de tu marca.',
-    action: 'Crear un primer mensaje cálido',
+    action: 'Crear un primer mensaje calido',
   },
   postventa: {
     title: 'Post-venta',
-    description: 'Crea seguimiento inteligente después de una compra para fidelizar.',
-    action: 'Dar seguimiento después de una compra',
+    description: 'Crea seguimiento inteligente despues de una compra para fidelizar.',
+    action: 'Dar seguimiento despues de una compra',
   },
   lanzamiento: {
     title: 'Lanzamiento',
-    description: 'Genera copy multicanal para anunciar un producto, servicio o campaña.',
+    description: 'Genera copy multicanal para anunciar un producto, servicio o campana.',
     action: 'Anunciar una novedad',
   },
   propuesta: {
@@ -40,14 +40,17 @@ export function RecipeFlow({ type }: RecipeFlowProps) {
 
   return (
     <section className="recipe-page">
-      <div className="recipe-hero recipe-hero-compact">
+      {/* Compact inline header */}
+      <div className="recipe-topbar">
         <Link to="/dashboard" className="recipe-back">
           <ArrowLeft size={16} />
-          Volver al Dashboard
+          Dashboard
         </Link>
-        <span className="dashboard-eyebrow">Receta de acción</span>
-        <h1>{copy.title}</h1>
-        <p>{copy.description}</p>
+        <div className="recipe-topbar-center">
+          <span className="recipe-topbar-badge">Receta</span>
+          <h1>{copy.title}</h1>
+          <p>{copy.description}</p>
+        </div>
       </div>
 
       <div className="recipe-guide">
@@ -63,7 +66,7 @@ export function RecipeFlow({ type }: RecipeFlowProps) {
         </div>
         <div className="recipe-guide-item">
           <Eye size={16} />
-          <strong>Revisa y envía</strong>
+          <strong>Revisa y envia</strong>
           <small>Edita antes de aprobar.</small>
         </div>
       </div>
@@ -76,7 +79,7 @@ export function RecipeFlow({ type }: RecipeFlowProps) {
             <span className="panel-icon"><Database size={16} /></span>
             <div>
               <span>Contexto</span>
-              <h2>Qué usará Baral AI</h2>
+              <h2>Que usara Baral AI</h2>
             </div>
           </div>
 
@@ -84,14 +87,14 @@ export function RecipeFlow({ type }: RecipeFlowProps) {
             <Database size={16} />
             <span>
               <strong>Tu base de clientes</strong>
-              <small>Filtra los destinatarios que cumplen la condición.</small>
+              <small>Filtra los destinatarios que cumplen la condicion.</small>
             </span>
           </div>
           <div className="recipe-side-step">
             <Sparkles size={16} />
             <span>
               <strong>Tu Brand Brain</strong>
-              <small>Mantiene tono, propuesta y límites de la marca.</small>
+              <small>Mantiene tono, propuesta y limites de la marca.</small>
             </span>
           </div>
         </aside>

@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { Mic, MicOff, Sparkles, Trash2, Megaphone } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Megaphone, Mic, MicOff, Sparkles, Trash2 } from 'lucide-react'
 import { SocialPreview } from '../components/preview/SocialPreview'
 import type { MockContent } from '../components/preview/ChannelMocks'
 import { generateContent, generateImage, parseApiError } from '../lib/api'
+import { supabase } from '../lib/supabase'
 import type { ChannelType, ContentItem } from '../types'
 
 interface Campaign {
@@ -11,6 +12,14 @@ interface Campaign {
   prompt: string
   content: MockContent
   contentByChannel: Partial<Record<ChannelType, MockContent>>
+}
+
+interface StudioCampaignRow {
+  id: string
+  name: string
+  prompt: string
+  content: MockContent
+  content_by_channel: Partial<Record<ChannelType, MockContent>> | null
 }
 
 type SpeechRecognitionLike = {
@@ -59,25 +68,66 @@ function nameFromPrompt(prompt: string, index: number): string {
   return words || `Campaña ${index}`
 }
 
-const SEED: Campaign = {
-  id: 'seed',
-  name: 'Sesiones de primavera',
-  prompt: 'Promociona las nuevas sesiones de fotos familiares de primavera, luz natural y entrega en 48h.',
-  content: contentFromText(
-    'Ya está abierta la agenda de sesiones de primavera. Luz natural, exteriores y entrega en 48h para recuerdos que duran.',
-  ),
-  contentByChannel: {},
+function rowToCampaign(row: StudioCampaignRow): Campaign {
+  return {
+    id: row.id,
+    name: row.name,
+    prompt: row.prompt,
+    content: row.content,
+    contentByChannel: row.content_by_channel ?? {},
+  }
 }
 
 export function Studio() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([SEED])
-  const [selectedId, setSelectedId] = useState<string>(SEED.id)
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [selectedId, setSelectedId] = useState<string>('')
   const [prompt, setPrompt] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [loadingCampaigns, setLoadingCampaigns] = useState(true)
   const [listening, setListening] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
   const selected = campaigns.find((campaign) => campaign.id === selectedId) ?? null
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadCampaigns() {
+      setLoadingCampaigns(true)
+
+      const { data: userData } = await supabase.auth.getUser()
+      const userId = userData.user?.id
+
+      if (!userId) {
+        if (!cancelled) setLoadingCampaigns(false)
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('studio_campaigns')
+        .select('id,name,prompt,content,content_by_channel')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (cancelled) return
+
+      if (error) {
+        setMessage('No se pudieron cargar campañas guardadas. Verifica que exista la tabla studio_campaigns en Supabase.')
+        setLoadingCampaigns(false)
+        return
+      }
+
+      const savedCampaigns = ((data ?? []) as StudioCampaignRow[]).map(rowToCampaign)
+      setCampaigns(savedCampaigns)
+      setSelectedId(savedCampaigns[0]?.id ?? '')
+      setLoadingCampaigns(false)
+    }
+
+    void loadCampaigns()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function handleGenerate() {
     const clean = prompt.trim()
@@ -106,7 +156,7 @@ export function Studio() {
       }, {})
 
       const fallback = byChannel.email ?? contentFromText(clean, imageUrl)
-      const campaign: Campaign = {
+      const localCampaign: Campaign = {
         id: crypto.randomUUID(),
         name: nameFromPrompt(clean, campaigns.length + 1),
         prompt: clean,
@@ -114,8 +164,36 @@ export function Studio() {
         contentByChannel: byChannel,
       }
 
-      setCampaigns((prev) => [campaign, ...prev])
-      setSelectedId(campaign.id)
+      const { data: userData } = await supabase.auth.getUser()
+      const userId = userData.user?.id
+
+      if (!userId) {
+        throw new Error('No hay una sesión activa para guardar la campaña.')
+      }
+
+      const { data: inserted, error: saveError } = await supabase
+        .from('studio_campaigns')
+        .insert({
+          user_id: userId,
+          name: localCampaign.name,
+          prompt: localCampaign.prompt,
+          content: localCampaign.content,
+          content_by_channel: localCampaign.contentByChannel,
+        })
+        .select('id,name,prompt,content,content_by_channel')
+        .single()
+
+      if (saveError) {
+        setCampaigns((prev) => [localCampaign, ...prev])
+        setSelectedId(localCampaign.id)
+        setPrompt('')
+        setMessage('Campaña generada, pero no se guardó en Supabase. Ejecuta el SQL de studio_campaigns.')
+        return
+      }
+
+      const savedCampaign = rowToCampaign(inserted as StudioCampaignRow)
+      setCampaigns((prev) => [savedCampaign, ...prev])
+      setSelectedId(savedCampaign.id)
       setPrompt('')
     } catch (error) {
       setMessage(parseApiError(error))
@@ -125,6 +203,7 @@ export function Studio() {
   }
 
   function handleDelete(id: string) {
+    void supabase.from('studio_campaigns').delete().eq('id', id)
     setCampaigns((prev) => {
       const next = prev.filter((campaign) => campaign.id !== id)
       if (id === selectedId) setSelectedId(next[0]?.id ?? '')
@@ -212,7 +291,9 @@ export function Studio() {
               <small>{campaigns.length}</small>
             </div>
             <div className="studio-list-scroll">
-              {campaigns.length === 0 ? (
+              {loadingCampaigns ? (
+                <p className="studio-empty">Cargando campañas guardadas...</p>
+              ) : campaigns.length === 0 ? (
                 <p className="studio-empty">Aún no has generado campañas. Describe una arriba.</p>
               ) : (
                 campaigns.map((campaign) => (
@@ -256,7 +337,7 @@ export function Studio() {
 
         <aside className="studio-preview">
           {selected ? (
-            <SocialPreview content={selected.content} contentByChannel={selected.contentByChannel} />
+            <SocialPreview content={selected.content} contentByChannel={selected.contentByChannel} loading={generating} />
           ) : (
             <div className="studio-preview-empty">
               <Sparkles size={28} strokeWidth={1.3} />

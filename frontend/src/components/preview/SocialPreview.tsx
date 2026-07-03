@@ -35,9 +35,10 @@ interface SocialPreviewProps {
   content?: MockContent
   contentByChannel?: Partial<Record<ChannelType, MockContent>>
   initialChannel?: ChannelType
+  loading?: boolean
 }
 
-export function SocialPreview({ content = SAMPLE, contentByChannel, initialChannel = 'email' }: SocialPreviewProps) {
+export function SocialPreview({ content = SAMPLE, contentByChannel, initialChannel = 'email', loading = false }: SocialPreviewProps) {
   const [channel, setChannel] = useState<ChannelType>(initialChannel)
   const [open, setOpen] = useState(false)
 
@@ -87,6 +88,12 @@ export function SocialPreview({ content = SAMPLE, contentByChannel, initialChann
             {channel === 'instagram' && <InstagramMock c={activeContent} />}
             {channel === 'facebook' && <FacebookMock c={activeContent} />}
             {channel === 'tiktok' && <TikTokMock c={activeContent} />}
+            {loading && (
+              <div className="phone-loading-overlay">
+                <div className="phone-spinner" />
+                <p>Generando...</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

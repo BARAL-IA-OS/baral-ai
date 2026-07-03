@@ -10,6 +10,7 @@ import {
   Settings,
   Sparkles,
   Tag,
+  Users,
 } from 'lucide-react'
 import baralLogoDark from '../../assets/login/logo baral dark.png'
 import { useAuth } from '../../hooks/useAuth'
@@ -25,7 +26,8 @@ const strategyItems = [
 ] as const
 
 const insightItems = [
-  { to: '/analytics', label: 'Reportes y Analítica', Icon: BarChart3 },
+  { to: '/clients', label: 'Clientes', Icon: Users },
+  { to: '/analytics', label: 'Reportes y Analitica', Icon: BarChart3 },
   { to: '/onboarding?force=true', label: 'Marca', Icon: Tag },
 ] as const
 

@@ -58,15 +58,19 @@ export function EmailPreviewMock({ draft, recipients = [], brandName = 'Nuestra 
       {/* Cuerpo del correo con contenedor estilizado (Email Body) */}
       <div className="email-mock-body-container">
         <div className="email-mock-inner-card">
-          {/* Logo / Branding Placeholder */}
-          <div className="email-mock-logo-area">
+          {/* Cabecera / Brand Banner */}
+          <div className="email-mock-banner">
             <span className="email-mock-logo-text">{brandName}</span>
           </div>
 
           <div className="email-mock-message-content">
             <h3 className="email-mock-greeting">{customizedGreeting}</h3>
             
-            <p className="email-mock-body-text">{draft.cuerpo}</p>
+            <div className="email-mock-body-text">
+              {draft.cuerpo.split('\n').map((paragraph, idx) => (
+                paragraph.trim() ? <p key={idx}>{paragraph}</p> : <br key={idx} />
+              ))}
+            </div>
 
             {draft.cta && (
               <div className="email-mock-cta-wrapper">

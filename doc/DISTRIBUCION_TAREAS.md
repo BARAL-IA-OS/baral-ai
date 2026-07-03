@@ -16,6 +16,8 @@
 - [x] Campo opcional **`website_url`** + boton "Solicitar mi pagina".
 - [x] **Perfil `/profile`** (editar nombre, empresa, logo local).
 - [x] **Estudio conectado** al backend (`generateContent` + `generateImage`), dictado por voz.
+- [x] **Persistencia de campañas del Estudio** en Supabase (`studio_campaigns`) con RLS.
+- [x] **Historial unificado**: muestra recetas (`tasks`) + campañas generadas en Estudio (`studio_campaigns`).
 - [x] Cards interactivos; `MetricsPanel` y `RecentTasks` con datos reales.
 
 > ⚠️ **PENDIENTE OMAR (bloqueante):** correr `doc/sql_website_url.sql` en Supabase
@@ -23,6 +25,7 @@
 >
 > Pendientes menores: inyectar Brand Brain real en el preview del Estudio (hoy usa datos de ejemplo);
 > voz-a-texto en `InfoUploadModal` (placeholder).
+> SQL nuevo ya ejecutado por Omar: `doc/sql_studio_campaigns.sql`.
 
 ---
 
@@ -180,7 +183,7 @@
       (stepper del pipeline + navegacion automatica a `/preview/:taskId`).
 - [x] Preview (`Preview.tsx`) → detalle real via `useTask` + `getTask`: draft editable, destinatarios,
       costo y score. Boton "Aprobar y Enviar" → `POST /api/tasks/{id}/approve`.
-- [x] Historial (`History.tsx` / `TaskList.tsx`) → `GET /api/tasks`.
+- [x] Historial (`History.tsx`) → lee `GET /api/tasks` + `studio_campaigns` de Supabase.
 - [x] Analytics (`Analytics.tsx`) → `GET /api/analytics/summary`.
 - [x] **Human Gate real:** el draft editado se envia y persiste (`approveTask(id, draft)`).
 
@@ -235,9 +238,10 @@
 ### JHAMIL — Pendiente (sobre la base ya creada)
 - [ ] Cargar el **Brand Brain real** en los mockups (nombre, handle, iniciales) en vez de "Studio Foto" fijo
       (hoy en `SocialPreview.tsx` const `SAMPLE` y en `Studio.tsx` const `BRAND`)
-- [ ] Cuando el backend genere imagen, renderizarla real en `GeneratedMedia` (hoy es placeholder)
-- [ ] Conectar el boton **"Generar campaña"** al endpoint de generacion (ver Omar abajo)
-- [ ] Listar/persistir las **campañas reales** del usuario (hoy viven solo en estado local)
+- [x] Renderizar imagen real en `GeneratedMedia` cuando `generateImage` devuelve `image_url` o `image_b64`
+- [x] Conectar el boton **"Generar campaña"** al endpoint de generacion (`generateContent` + `generateImage`).
+- [x] Listar/persistir las **campañas reales** del usuario en `studio_campaigns`.
+- [x] Historial incluye acciones del Estudio junto a recetas ejecutadas.
 - [ ] Agrupar el **Dashboard** en las 2 familias (Mensajes a clientes / Contenido para redes),
       con cards que naveguen al Estudio con el canal preseleccionado
 - [ ] (Opcional) edicion inline del texto generado antes de ver el preview
@@ -260,7 +264,7 @@
       ⚠️ **Pendiente Omar:** correr `doc/sql_usage_events.sql` en Supabase para activar el registro
       (hasta entonces degrada silencioso: no rompe nada, pero no acumula). Para Jhamil: `getUsage()` para
       mostrar "gastado en generacion" en la plataforma.
-- [ ] Persistencia de campañas: tabla `campaigns` (o reutilizar `tasks` con columna `channel`)
+- [x] Persistencia de campañas: tabla `studio_campaigns` con RLS (`doc/sql_studio_campaigns.sql`).
 - [ ] Email se mantiene como el unico canal que se **ENVIA** de verdad (Resend); el resto = generar + preview
 
 ---
@@ -296,7 +300,7 @@ Cierre:
 - [ ] Dashboard muestra las 5 recetas funcionales
 - [ ] Al menos 1 receta genera preview con IA real
 - [ ] Usuario aprueba y el email se envia via Resend
-- [ ] Historial muestra tareas con su estado
+- [x] Historial muestra recetas y campañas del Estudio con cards, filtros y metadata
 - [ ] Analytics muestra KPIs reales
 - [ ] Frontend desplegado en Vercel
 - [ ] Backend corre localmente para la demo

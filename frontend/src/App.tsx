@@ -13,6 +13,7 @@ import { useAuth } from './hooks/useAuth'
 import { hasBrandBrain } from './hooks/useBrandBrain'
 import { hasSeenWelcome } from './hooks/useWelcomeSeen'
 import { Analytics } from './pages/Analytics'
+import { Clients } from './pages/Clients'
 import { Dashboard } from './pages/Dashboard'
 import { History } from './pages/History'
 import { Login } from './pages/Login'
@@ -131,6 +132,7 @@ function App() {
             <Route path="/preview/:taskId" element={<Preview />} />
             <Route path="/history" element={<History />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/clients" element={<Clients />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
         </Route>

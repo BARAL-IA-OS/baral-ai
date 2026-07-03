@@ -1,0 +1,9 @@
+nombre,email,telefono,ultima_compra,producto
+"Ana","ana.5@example.com","+56912345671","2026-06-28","Cartera Cuero"
+"Carlos","carlos.10@example.com","+56912345672","2026-06-23","Chaqueta Cuero"
+"Juan","juan.20@gmail.com","","2026-06-13","Zapatos Oxford"
+"Maria","maria.40@example.com","","2026-05-24","Vestido Fiesta"
+"Pedro","pedro.55@example.com","","2026-05-09","Polera Algodon"
+"Lucia","lucia.70@example.com","+56987654326","2026-04-24","Cinturon Cuero"
+"Roberto","roberto.120@example.com","","2026-03-05","Gafas de sol"
+"Sofia","sofia.nueva@example.com","+56999888778","","Suscripcion"

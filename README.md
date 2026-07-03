@@ -78,12 +78,12 @@ Hecho:
       Se guarda en **Supabase Storage** (bucket `content-images`) → devuelve `image_url`. Costo real desde `usage`. Probado (~$0.011/imagen).
 - [x] **Registro de gasto:** `usage_service` + `GET /api/usage/summary` (`getUsage`). Cada generación (texto/imagen) registra costo.
       Requiere crear la tabla `usage_events` en Supabase (`doc/sql_usage_events.sql`).
+- [x] **Persistencia de campañas del Estudio:** tabla `studio_campaigns` con RLS (`doc/sql_studio_campaigns.sql`).
 
 **Backend Fase 1 (Prioridades 1-4): COMPLETO.** Estudio (texto + imagen) listo en backend.
 
 Pendiente:
 - [ ] **Correr `doc/sql_usage_events.sql` en Supabase** para activar el registro de gasto.
-- [ ] Persistencia de campañas del Estudio (tabla `campaigns` o reutilizar `tasks` con `channel`).
 - [ ] Agregar `website_url` opcional a Brand Brain.
 - [ ] Verificar un dominio en Resend para enviar a clientes reales (hoy solo entrega al correo de la cuenta).
 - [ ] Desplegar backend + integrar con el frontend.
@@ -109,14 +109,16 @@ Hecho:
 - [x] **Rediseno UI (2026-07-03):** modo light (`useTheme`), pagina `/welcome`, sidebar colapsable,
       dropdown de cuenta con barra de tokens, perfil `/profile`, Brand Brain con modal por campo
       (`InfoUploadModal`) + `website_url`, Estudio conectado (`generateContent`/`generateImage`) con dictado por voz.
+- [x] **Estudio persistente:** campañas guardadas en `studio_campaigns`, se mantienen al recargar y se eliminan en Supabase.
+- [x] **Historial rediseñado:** cards por acción, resumen, filtros y fuente unificada (`tasks` + `studio_campaigns`).
 - [x] `npm run lint` y `npm run build` pasan.
 
 Pendiente:
 
 - [ ] **Correr `doc/sql_website_url.sql`** en Supabase (bloqueante: guardar Brand Brain falla sin la columna).
 - [ ] Cargar Brand Brain real en los mockups del Estudio (hoy usan datos de ejemplo "Studio Foto").
-- [ ] Renderizar la imagen real generada en el preview del Estudio (hoy placeholder).
-- [ ] Conectar "Generar campana" a `POST /api/content/generate`.
+- [x] Renderizar la imagen real generada en el preview del Estudio cuando `generateImage` devuelve `image_url` o `image_b64`.
+- [x] Conectar "Generar campana" a `POST /api/content/generate`.
 - [ ] Agrupar el Dashboard en las 2 familias (Mensajes a clientes / Contenido para redes).
 - [ ] Pulir estados vacios, errores y loading.
 
@@ -276,6 +278,7 @@ Tablas actuales:
 - [x] `tasks`
 - [x] `usage_events` (registro de gasto de generacion)
 - [x] `saved_strategies` (Feature A: Mis Estrategias)
+- [x] `studio_campaigns` (campañas del Estudio persistidas)
 
 Storage:
 
@@ -300,8 +303,8 @@ HAVING COUNT(*) > 1;
 
 > Backend Fase 1 (Prioridades 1-4) COMPLETO y probado contra servicios reales. Sigue:
 
-- [ ] Jhamil: conectar la UI a los endpoints reales (contratos ya listos en `lib/api.ts`).
-- [ ] Omar: `POST /api/content/generate` + modelo de imagen (Estudio multicanal).
+- [x] Jhamil/Omar: Studio conectado a endpoints reales y persistencia en Supabase.
+- [x] Omar: `POST /api/content/generate` + modelo de imagen (Estudio multicanal).
 - [ ] Omar: campo `website_url` opcional en Brand Brain.
 - [ ] Omar: verificar dominio en Resend para enviar a clientes reales (hoy solo al correo de la cuenta).
 - [ ] Omar/Jhamil: correr todo local end-to-end y probar en el navegador.
@@ -338,7 +341,7 @@ Implementacion recomendada:
 - [ ] Estudio genera contenido multicanal con preview por red.
 - [ ] Usuario aprueba envio.
 - [ ] Resend envia emails reales.
-- [ ] Historial muestra tareas.
+- [x] Historial muestra recetas y campañas del Estudio.
 - [ ] Analytics muestra KPIs reales.
 - [ ] Frontend desplegado en Vercel.
 - [ ] Backend desplegado o listo para demo local.
