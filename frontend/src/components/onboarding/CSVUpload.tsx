@@ -25,7 +25,7 @@ function parseCSV(text: string): ParseResult {
   const headers = lines[0].split(',').map((h) => h.trim().replace(/^["']|["']$/g, ''))
   const rows: CSVRow[] = []
 
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = 1; i < lines.length; i += 1) {
     const values = lines[i].split(',').map((v) => v.trim().replace(/^["']|["']$/g, ''))
     const row: CSVRow = {}
     headers.forEach((header, index) => {
@@ -61,7 +61,7 @@ export function CSVUpload() {
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError('El archivo excede el límite recomendado de 10 MB.')
+      setError('El archivo excede el limite recomendado de 10 MB.')
       setFileName('')
       setRawFile(null)
       return
@@ -74,7 +74,7 @@ export function CSVUpload() {
         const result = parseCSV(text)
 
         if (result.headers.length === 0) {
-          setError('El CSV está vacío o no tiene encabezados.')
+          setError('El CSV esta vacio o no tiene encabezados.')
           setFileName('')
           setRawFile(null)
           return
@@ -122,7 +122,7 @@ export function CSVUpload() {
       if (res.success) {
         setImportSuccess(
           `${res.imported} clientes importados correctamente` +
-          (res.skipped > 0 ? ` · ${res.skipped} filas omitidas` : ''),
+          (res.skipped > 0 ? ` - ${res.skipped} filas omitidas` : ''),
         )
       } else {
         setError(res.errors?.join(', ') ?? 'Error al importar los clientes.')
@@ -134,7 +134,7 @@ export function CSVUpload() {
     }
   }
 
-  const recommendedCols = ['nombre', 'email', 'teléfono', 'última compra']
+  const recommendedCols = ['nombre', 'email', 'telefono', 'ultima compra']
   const matchedCols = parseResult
     ? recommendedCols.filter((col) =>
         parseResult.headers.some((h) => h.toLowerCase() === col.toLowerCase()),
@@ -167,7 +167,7 @@ export function CSVUpload() {
           <AppIcon name={fileName ? 'check' : 'upload'} size={27} />
         </span>
         <strong>{fileName || 'Selecciona o arrastra tu archivo'}</strong>
-        <span>{fileName ? 'Archivo listo para procesar' : 'Formato CSV · máximo recomendado 10 MB'}</span>
+        <span>{fileName ? 'Archivo listo para procesar' : 'Formato CSV - maximo recomendado 10 MB'}</span>
         <span className="upload-action">{fileName ? 'Cambiar archivo' : 'Elegir archivo'}</span>
         <input
           type="file"
@@ -176,16 +176,12 @@ export function CSVUpload() {
         />
       </label>
 
-      {/* Error message */}
-      {error && (
-        <p className="csv-error">⚠ {error}</p>
-      )}
+      {error && <p className="csv-error">Aviso: {error}</p>}
 
-      {/* Parse summary + import action */}
       {parseResult && (
         <div className="csv-summary">
           <div className="csv-summary-header">
-            <strong>✓ {parseResult.total} filas detectadas</strong>
+            <strong>{parseResult.total} filas detectadas</strong>
             <span>{parseResult.headers.length} columnas</span>
           </div>
           <div className="csv-columns">
@@ -198,19 +194,18 @@ export function CSVUpload() {
               </span>
             ))}
             {parseResult.headers.length > 8 && (
-              <span className="csv-col-tag">+{parseResult.headers.length - 8} más</span>
+              <span className="csv-col-tag">+{parseResult.headers.length - 8} mas</span>
             )}
           </div>
           {matchedCols.length > 0 && (
             <p className="csv-match-note">
-              ✓ {matchedCols.length} de {recommendedCols.length} columnas recomendadas encontradas
+              {matchedCols.length} de {recommendedCols.length} columnas recomendadas encontradas
             </p>
           )}
 
-          {/* Import result or action button */}
           {importSuccess ? (
             <p className="csv-match-note" style={{ marginTop: '0.75rem' }}>
-              ✓ {importSuccess}
+              {importSuccess}
             </p>
           ) : (
             <button
@@ -230,10 +225,9 @@ export function CSVUpload() {
         <strong>Columnas recomendadas</strong>
         <span>nombre</span>
         <span>email</span>
-        <span>teléfono</span>
-        <span>última compra</span>
+        <span>telefono</span>
+        <span>ultima compra</span>
       </div>
     </section>
   )
 }
-

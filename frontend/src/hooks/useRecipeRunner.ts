@@ -34,7 +34,6 @@ export function useRecipeRunner() {
     setRunnerStatus('polling')
     setMessage('Procesando campaña con Inteligencia Artificial...')
 
-    // Timeout de 2 minutos para evitar bucles infinitos
     pollingTimeoutRef.current = setTimeout(() => {
       clearTimers()
       setRunnerStatus('error')
@@ -47,7 +46,7 @@ export function useRecipeRunner() {
         setTaskStatus(task.status)
 
         if (task.status === 'PROCESSING') {
-          setMessage('IA trabajando: Generando textos y auditando contenido...')
+          setMessage('IA trabajando: generando textos y auditando contenido...')
         } else if (task.status === 'PENDING_APPROVAL') {
           clearTimers()
           setRunnerStatus('success')
@@ -59,14 +58,13 @@ export function useRecipeRunner() {
         } else if (task.status === 'FAILED') {
           clearTimers()
           setRunnerStatus('error')
-          setError('El pipeline de Inteligencia Artificial falló al procesar la campaña.')
+          setError('El flujo de Inteligencia Artificial falló al procesar la campaña.')
         }
       } catch (err) {
-        // Ignorar errores temporales de conexión pero registrar si persisten
         console.error('Error durante el polling del task:', err)
       }
     }, 2500)
-  };
+  }
 
   const run = async (recipeType: RecipeType, params: Record<string, unknown>) => {
     setRunnerStatus('submitting')
@@ -101,12 +99,20 @@ export function useRecipeRunner() {
     }
   }
 
-  return { run, runnerStatus, taskStatus, taskId, message, error, reset: () => {
-    clearTimers()
-    setRunnerStatus('idle')
-    setTaskId(null)
-    setTaskStatus(null)
-    setMessage(null)
-    setError(null)
-  }}
+  return {
+    run,
+    runnerStatus,
+    taskStatus,
+    taskId,
+    message,
+    error,
+    reset: () => {
+      clearTimers()
+      setRunnerStatus('idle')
+      setTaskId(null)
+      setTaskStatus(null)
+      setMessage(null)
+      setError(null)
+    },
+  }
 }

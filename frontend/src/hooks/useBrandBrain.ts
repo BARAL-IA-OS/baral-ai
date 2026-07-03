@@ -80,3 +80,33 @@ export async function hasBrandBrain(): Promise<boolean> {
   const brandBrain = await getBrandBrain()
   return brandBrain !== null
 }
+
+export async function getClientsCount(): Promise<number> {
+  const userId = await getCurrentUserId()
+
+  const { count, error } = await supabase
+    .from('clients')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  if (error) {
+    throw error
+  }
+
+  return count ?? 0
+}
+
+export async function getOnboardingStatus() {
+  const [brandBrain, clientsCount] = await Promise.all([
+    getBrandBrain(),
+    getClientsCount().catch(() => 0),
+  ])
+
+  return {
+    accountCreated: true,
+    brandBrain,
+    brandBrainComplete: brandBrain !== null,
+    clientsCount,
+    clientsComplete: clientsCount > 0,
+  }
+}

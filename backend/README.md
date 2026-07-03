@@ -108,6 +108,8 @@ curl http://localhost:8000/health
 | `GET`/`POST`/`DELETE` | `/api/strategies[/{id}]` | ✅ | Feature A: guardar/listar/eliminar estrategias (tabla `saved_strategies`) |
 | `POST` | `/api/content/generate` | ✅ | Estudio: genera texto por canal (email/whatsapp/instagram/facebook/tiktok) desde el prompt + Brand Brain |
 | `POST` | `/api/content/image` | ✅ | Estudio: genera UNA imagen (OpenAI `gpt-image-1`) bajo demanda. La guarda en Supabase Storage y devuelve `image_url` + costo real |
+| `POST` | `/api/brand/extract-url` | ✅ | Brand Brain: extrae y estructura info desde la URL de la empresa |
+| `POST` | `/api/brand/extract-file` | ✅ | Brand Brain: idem desde un archivo (PDF/DOCX/MD/TXT) |
 | `GET`  | `/api/usage/summary` | ✅ | Gasto de generación del usuario (texto + imagen). Requiere la tabla `usage_events` (ver `doc/sql_usage_events.sql`) |
 
 ---

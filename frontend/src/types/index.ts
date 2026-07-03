@@ -5,7 +5,7 @@ export type RecipeType =
   | 'lanzamiento'
   | 'propuesta'
 
-// Canales de salida. Email se ENVÍA (Resend). El resto, por ahora, solo se
+// Canales de salida. Email se envía con Resend. El resto, por ahora, solo se
 // genera y se previsualiza (publicación directa = fase posterior).
 export type ChannelType =
   | 'email'
@@ -41,6 +41,7 @@ export interface BrandBrain {
   audiencia: string
   diferenciador: string
   prohibiciones: string
+  website_url?: string
 }
 
 export interface Client {
@@ -160,6 +161,24 @@ export interface GenerateImageResponse {
   image_b64: string | null
   cost_usd: number
   tokens: number
+  provider?: string
+}
+
+// Ingestión del Brand Brain: campos inferidos desde una URL o un documento.
+export interface BrandExtractFields {
+  industria: string
+  propuesta: string
+  tono: string
+  audiencia: string
+  diferenciador: string
+}
+
+export interface BrandExtractResponse {
+  success: boolean
+  nombre_empresa: string
+  fields: BrandExtractFields
+  raw_text: string
+  chars: number
   provider?: string
 }
 

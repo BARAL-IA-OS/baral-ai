@@ -1,10 +1,25 @@
 import { AppIcon } from '../ui/AppIcon'
 
-export function SetupProgress() {
+interface SetupProgressProps {
+  brandBrainComplete: boolean
+  clientsComplete: boolean
+}
+
+export function SetupProgress({ brandBrainComplete, clientsComplete }: SetupProgressProps) {
   const steps = [
     { label: 'Cuenta creada', description: 'Acceso confirmado', icon: 'check', state: 'complete' },
-    { label: 'Brand Brain', description: 'Define tu identidad', icon: 'brain', state: 'active' },
-    { label: 'Base de clientes', description: 'Importa tu archivo CSV', icon: 'upload', state: 'pending' },
+    {
+      label: 'Brand Brain',
+      description: brandBrainComplete ? 'Identidad definida' : 'Define tu identidad',
+      icon: 'brain',
+      state: brandBrainComplete ? 'complete' : 'active',
+    },
+    {
+      label: 'Base de clientes',
+      description: clientsComplete ? 'Clientes importados' : 'Importa tu archivo CSV',
+      icon: clientsComplete ? 'check' : 'upload',
+      state: clientsComplete ? 'complete' : 'pending',
+    },
   ] as const
 
   return (

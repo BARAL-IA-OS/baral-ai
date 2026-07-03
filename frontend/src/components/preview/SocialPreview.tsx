@@ -18,13 +18,12 @@ const CHANNELS: { id: ChannelType; label: string; Icon: React.ElementType }[] = 
   { id: 'tiktok', label: 'TikTok', Icon: Music2 },
 ]
 
-// Contenido de ejemplo. El backend lo reemplazará por el draft real generado.
 const SAMPLE: MockContent = {
   brandName: 'Studio Foto',
   handle: 'studiofoto',
   initials: 'SF',
   recipient: 'María García',
-  subject: 'María, te extrañamos en Studio Foto 📸',
+  subject: 'María, te extrañamos en Studio Foto',
   caption:
     'Ya está abierta la agenda de sesiones de primavera. Luz natural, exteriores y entrega en 48h para que tu familia tenga recuerdos que duran.',
   hashtags: ['#FotografíaFamiliar', '#Medellín', '#SesiónDeFotos'],
@@ -34,19 +33,21 @@ const SAMPLE: MockContent = {
 
 interface SocialPreviewProps {
   content?: MockContent
+  contentByChannel?: Partial<Record<ChannelType, MockContent>>
   initialChannel?: ChannelType
 }
 
-export function SocialPreview({ content = SAMPLE, initialChannel = 'email' }: SocialPreviewProps) {
+export function SocialPreview({ content = SAMPLE, contentByChannel, initialChannel = 'email' }: SocialPreviewProps) {
   const [channel, setChannel] = useState<ChannelType>(initialChannel)
   const [open, setOpen] = useState(false)
 
   const current = CHANNELS.find((c) => c.id === channel) ?? CHANNELS[0]
+  const activeContent = contentByChannel?.[channel] ?? content
 
   return (
-    <div className="social-preview">
+    <div className={`social-preview social-preview-${channel}`}>
       <div className="channel-dd">
-        <button type="button" className="channel-dd-btn" onClick={() => setOpen((o) => !o)}>
+        <button type="button" className="channel-dd-btn" onClick={() => setOpen((value) => !value)}>
           <current.Icon size={15} strokeWidth={1.9} />
           <span>{current.label}</span>
           <ChevronDown size={14} className="chev" />
@@ -81,11 +82,11 @@ export function SocialPreview({ content = SAMPLE, initialChannel = 'email' }: So
         <div className="phone">
           <span className="phone-notch" />
           <div className="phone-screen">
-            {channel === 'email' && <EmailMock c={content} />}
-            {channel === 'whatsapp' && <WhatsAppMock c={content} />}
-            {channel === 'instagram' && <InstagramMock c={content} />}
-            {channel === 'facebook' && <FacebookMock c={content} />}
-            {channel === 'tiktok' && <TikTokMock c={content} />}
+            {channel === 'email' && <EmailMock c={activeContent} />}
+            {channel === 'whatsapp' && <WhatsAppMock c={activeContent} />}
+            {channel === 'instagram' && <InstagramMock c={activeContent} />}
+            {channel === 'facebook' && <FacebookMock c={activeContent} />}
+            {channel === 'tiktok' && <TikTokMock c={activeContent} />}
           </div>
         </div>
       </div>

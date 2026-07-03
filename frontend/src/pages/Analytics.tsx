@@ -24,7 +24,7 @@ export function Analytics() {
     <section className="page stack">
       <div>
         <h1>Analíticas</h1>
-        <p>KPIs del pipeline de marketing.</p>
+        <p>KPIs del flujo de marketing.</p>
       </div>
       {error && <div className="error-banner">⚠ {error}</div>}
 

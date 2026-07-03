@@ -106,11 +106,14 @@ Hecho:
 - [x] **Preview premium:** layout split (editor + preview en vivo `EmailPreviewMock`), toggle escritorio/movil,
       **regenerar campo con IA** por seccion, success card post-envio.
 - [x] **Feature A "Mis Estrategias":** `SavedStrategies.tsx` en Dashboard, guardar/eliminar/reusar estrategias.
+- [x] **Rediseno UI (2026-07-03):** modo light (`useTheme`), pagina `/welcome`, sidebar colapsable,
+      dropdown de cuenta con barra de tokens, perfil `/profile`, Brand Brain con modal por campo
+      (`InfoUploadModal`) + `website_url`, Estudio conectado (`generateContent`/`generateImage`) con dictado por voz.
 - [x] `npm run lint` y `npm run build` pasan.
 
 Pendiente:
 
-- [ ] Conectar el Estudio (`generateContent` / `generateImage`) — endpoints listos, falta la UI.
+- [ ] **Correr `doc/sql_website_url.sql`** en Supabase (bloqueante: guardar Brand Brain falla sin la columna).
 - [ ] Cargar Brand Brain real en los mockups del Estudio (hoy usan datos de ejemplo "Studio Foto").
 - [ ] Renderizar la imagen real generada en el preview del Estudio (hoy placeholder).
 - [ ] Conectar "Generar campana" a `POST /api/content/generate`.
@@ -164,6 +167,8 @@ POST /api/tasks/{taskId}/regenerate  # regenera UN campo del email con IA — LI
 GET  /api/analytics/summary
 POST /api/content/generate          # texto por canal (Estudio) — LISTO
 POST /api/content/image             # imagen por demanda, OpenAI gpt-image-1 — LISTO
+POST /api/brand/extract-url         # autocompletar Brand Brain desde la web — LISTO
+POST /api/brand/extract-file        # autocompletar Brand Brain desde archivo — LISTO
 GET  /api/usage/summary             # gasto de generacion del usuario — LISTO
 POST /api/strategies                # Feature A: Mis Estrategias — LISTO
 GET  /api/strategies
@@ -266,7 +271,7 @@ http://localhost:8000/docs
 
 Tablas actuales:
 
-- [x] `brand_brain`
+- [x] `brand_brain` (⚠️ falta columna `website_url` — correr `doc/sql_website_url.sql`)
 - [x] `clients`
 - [x] `tasks`
 - [x] `usage_events` (registro de gasto de generacion)

@@ -1,21 +1,69 @@
-:root {
-  --bg: #09090b;
-  --surface: #111113;
-  --surface-muted: #18181b;
-  --text: #fafafa;
-  --text-muted: #a1a1aa;
-  --border: #27272a;
-  --primary: #7c3aed;
-  --primary-dark: #6d28d9;
-  --accent: #f59e0b;
-  --danger: #ef4444;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+/* ── Baral AI — Design System Tokens ─────────────────────────────── */
+/* Theme is controlled via [data-theme] on <html>                    */
+/* Filosofía: estructura NEUTRA (grises) + violeta solo de acento.    */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ── Light Theme (default) ──────────────────────────────────────── */
+
+:root,
+[data-theme="light"] {
+  /* Backgrounds — fondo neutro frío, superficies blancas, buena separación */
+  --bg: #F4F5F8;
+  --surface: #FFFFFF;
+  --surface-muted: #F1F2F6;
+  --surface-elevated: #FFFFFF;
+
+  /* Text — casi negro para contraste real */
+  --text: #101322;
+  --text-muted: #6B7280;
+  --text-secondary: #454B5A;
+
+  /* Borders — grises definidos (dan estructura sin gritar) */
+  --border: #E6E7EE;
+  --border-strong: #D3D5E0;
+
+  /* Brand */
+  --primary: #7C3AED;
+  --primary-dark: #6D28D9;
+  --primary-light: #A78BFA;
+  --primary-bg: rgba(124, 58, 237, 0.07);
+  --primary-bg-hover: rgba(124, 58, 237, 0.12);
+  --accent: #F59E0B;
+  --danger: #EF4444;
+  --success: #16A34A;
+  --warning: #F59E0B;
+
+  /* Shadows — elevación en capas (el mayor salto visual) */
+  --shadow: 0 4px 10px -2px rgba(16, 24, 40, 0.08), 0 2px 4px -2px rgba(16, 24, 40, 0.05);
+  --shadow-lg: 0 18px 36px -8px rgba(16, 24, 40, 0.14), 0 6px 12px -6px rgba(16, 24, 40, 0.06);
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-hover: 0 12px 24px -6px rgba(16, 24, 40, 0.14), 0 4px 8px -4px rgba(16, 24, 40, 0.07);
+
+  /* Sidebar */
+  --sidebar-bg: #FFFFFF;
+  --sidebar-text: #55596B;
+  --sidebar-text-hover: #101322;
+  --sidebar-border: #E6E7EE;
+  --sidebar-active-bg: linear-gradient(135deg, #7C3AED, #6D28D9);
+  --sidebar-hover-bg: #F1F2F6;
+  --sidebar-profile-bg: #F6F7FA;
+  --sidebar-profile-hover-bg: #EEEFF4;
+  --dropdown-bg: #FFFFFF;
+  --dropdown-border: #E6E7EE;
+
+  /* Radius */
   --radius: 12px;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Transitions */
+  --transition: 150ms ease;
+  --transition-slow: 260ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Font */
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -23,6 +71,51 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ── Dark Theme ─────────────────────────────────────────────────── */
+
+[data-theme="dark"] {
+  /* Fondo elevado (no negro puro) con buena separación bg↔surface */
+  --bg: #0A0A0D;
+  --surface: #161619;
+  --surface-muted: #1F1F24;
+  --surface-elevated: #202027;
+
+  --text: #F5F6F8;
+  --text-muted: #9CA0AB;
+  --text-secondary: #C4C7D0;
+
+  --border: #2A2B33;
+  --border-strong: #3A3B45;
+
+  --primary: #8B5CF6;
+  --primary-dark: #7C3AED;
+  --primary-light: #A78BFA;
+  --primary-bg: rgba(139, 92, 246, 0.16);
+  --primary-bg-hover: rgba(139, 92, 246, 0.24);
+  --accent: #FBBF24;
+  --danger: #F87171;
+  --success: #34D399;
+  --warning: #FBBF24;
+
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.55);
+
+  --sidebar-bg: #0F0F12;
+  --sidebar-text: #B4B7C0;
+  --sidebar-text-hover: #FFFFFF;
+  --sidebar-border: #22232A;
+  --sidebar-active-bg: linear-gradient(135deg, #7C3AED, #6D28D9);
+  --sidebar-hover-bg: #1C1C22;
+  --sidebar-profile-bg: #161619;
+  --sidebar-profile-hover-bg: #202027;
+  --dropdown-bg: #161619;
+  --dropdown-border: #2A2B33;
+}
+
+/* ── Global Resets ──────────────────────────────────────────────── */
 
 * {
   box-sizing: border-box;
@@ -32,6 +125,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  transition: background var(--transition-slow), color var(--transition-slow);
 }
 
 button,
@@ -44,10 +140,7 @@ a {
   color: inherit;
 }
 
-h1,
-h2,
-h3,
-p {
+h1, h2, h3, p {
   margin: 0;
 }
 
@@ -66,4 +159,21 @@ h3 {
 
 p {
   color: var(--text-muted);
+}
+
+/* Smooth transition for theme changes on all themed elements */
+.card,
+.sidebar,
+.main-panel,
+.topbar,
+input,
+textarea,
+.action-card,
+.metric-card,
+.modal,
+.modal-backdrop {
+  transition: background var(--transition-slow),
+              border-color var(--transition-slow),
+              color var(--transition-slow),
+              box-shadow var(--transition-slow);
 }

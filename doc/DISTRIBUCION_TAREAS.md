@@ -1,7 +1,59 @@
 # Distribucion de Tareas — Baral AI Fase 1
 > Equipo actual: Omar Quispe (Tech Lead & Full Stack) + Jhamil (Frontend Developer)
 > Saul salio del equipo. Sus tareas pendientes quedan reasignadas a Omar.
-> Actualizado: 2026-06-30
+> Actualizado: 2026-07-03
+
+---
+
+## 🎨 Rediseño de interfaz ✅ (2026-07-03, Omar)
+
+- [x] **Modo Light** (`useTheme` + `data-theme`, default light, persistido; toggle en dropdown de cuenta).
+- [x] **Pagina de bienvenida** `/welcome` (`useWelcomeSeen`, integrada en `HomeRedirect`).
+- [x] **Sidebar colapsable** (solo iconos + tooltips; estado persistido).
+- [x] **Cuenta como dropdown**: Notificaciones, Configuracion→/profile, toggle tema, **barra de uso de tokens**
+      (`TokenUsageBar` lee `getUsage()`), Cerrar sesion.
+- [x] **Brand Brain con modal por campo** (`InfoUploadModal`, estilo `doc/subir_info.png`): cada campo es un boton.
+- [x] Campo opcional **`website_url`** + boton "Solicitar mi pagina".
+- [x] **Perfil `/profile`** (editar nombre, empresa, logo local).
+- [x] **Estudio conectado** al backend (`generateContent` + `generateImage`), dictado por voz.
+- [x] Cards interactivos; `MetricsPanel` y `RecentTasks` con datos reales.
+
+> ⚠️ **PENDIENTE OMAR (bloqueante):** correr `doc/sql_website_url.sql` en Supabase
+> (`ALTER TABLE brand_brain ADD COLUMN website_url TEXT`). Sin esto, **guardar el Brand Brain falla**.
+>
+> Pendientes menores: inyectar Brand Brain real en el preview del Estudio (hoy usa datos de ejemplo);
+> voz-a-texto en `InfoUploadModal` (placeholder).
+
+---
+
+## 🧠 Ingestión del Brand Brain (URL / documento) ✅ (2026-07-03, Omar)
+
+> Autocompletar el Brand Brain desde la web de la empresa o un documento.
+
+**Backend:**
+- [x] `services/brand_extract_service.py` — URL (`httpx` + `trafilatura`, fallback BeautifulSoup) o
+      archivo (PDF `pypdf`, DOCX `python-docx`, MD/TXT) → texto → `llm_service` estructura los campos.
+- [x] `POST /api/brand/extract-url` (JSON `{ url }`) y `POST /api/brand/extract-file` (multipart).
+      Devuelven `{ fields: {industria, propuesta, tono, audiencia, diferenciador}, raw_text, chars }`.
+      Registran el gasto en `usage_events`.
+- [x] Deps uv: `trafilatura`, `beautifulsoup4`, `pypdf`, `python-docx`.
+- [x] Probado real: extrajo resend.com (~$0.0008) y un .md; llenó los 5 campos.
+
+**Frontend:**
+- [x] `BrandExtractModal.tsx` — tabs URL / Documento → extrae → **editor de campos** (revisar/editar) → aplicar.
+- [x] **Card de URL como primero** en `BrandBrainForm` ("Autocompletar con tu página web").
+- [x] Contrato tipado: `extractBrandFromUrl` / `extractBrandFromFile` + `BrandExtractResponse`.
+
+> Notas: sitios 100% JS pueden devolver poco (degradar a manual); `prohibiciones` NO se autocompleta
+> (la define el usuario). No auto-guarda: aplica al form y el usuario confirma antes de "Guardar Brand Brain".
+
+**Ajustes (2026-07-03):**
+- [x] La extracción ahora saca **primero el nombre de la empresa** (`nombre_empresa`) → se guarda en
+      `user_metadata.company_name` (misma fuente que el Perfil). El **Dashboard saluda con ese nombre**
+      (antes usaba `industria`, por eso salía el texto largo). Sin nueva columna: NO requiere SQL.
+- [x] Se **quitó la caja manual "URL de tu página web"** del form (redundante con el card de arriba).
+      La URL analizada se guarda en `website_url`. El botón **"Solicitar mi página"** se movió al modal
+      (pestaña URL: "¿No tienes página web? Solicita la tuya").
 
 ---
 

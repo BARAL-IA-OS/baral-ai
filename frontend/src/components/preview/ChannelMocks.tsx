@@ -25,10 +25,18 @@ export interface MockContent {
   hashtags: string[]
   cta: string
   mediaAlt: string
+  imageUrl?: string
 }
 
-/** Placeholder de la imagen/infografía generada por IA. */
-function GeneratedMedia({ alt, ratio = 'square' }: { alt: string; ratio?: 'square' | 'vertical' | 'wide' }) {
+function GeneratedMedia({ alt, imageUrl, ratio = 'square' }: { alt: string; imageUrl?: string; ratio?: 'square' | 'vertical' | 'wide' }) {
+  if (imageUrl) {
+    return (
+      <div className={`mock-media mock-media-${ratio} mock-media-image`} role="img" aria-label={alt}>
+        <img src={imageUrl} alt={alt} />
+      </div>
+    )
+  }
+
   return (
     <div className={`mock-media mock-media-${ratio}`} role="img" aria-label={alt}>
       <ImageIcon size={22} strokeWidth={1.5} />
@@ -38,7 +46,6 @@ function GeneratedMedia({ alt, ratio = 'square' }: { alt: string; ratio?: 'squar
   )
 }
 
-/* ── Email (Gmail) ──────────────────────────────────────────────── */
 export function EmailMock({ c }: { c: MockContent }) {
   return (
     <div className="mock mock-email">
@@ -58,15 +65,14 @@ export function EmailMock({ c }: { c: MockContent }) {
       <div className="mock-email-body">
         <p>Hola {c.recipient},</p>
         <p>{c.caption}</p>
-        <GeneratedMedia alt={c.mediaAlt} ratio="wide" />
+        <GeneratedMedia alt={c.mediaAlt} imageUrl={c.imageUrl} ratio="wide" />
         <a className="mock-email-cta" href="#preview" onClick={(e) => e.preventDefault()}>{c.cta}</a>
-        <p className="mock-email-signature">— Equipo {c.brandName}</p>
+        <p className="mock-email-signature">Equipo {c.brandName}</p>
       </div>
     </div>
   )
 }
 
-/* ── WhatsApp ───────────────────────────────────────────────────── */
 export function WhatsAppMock({ c }: { c: MockContent }) {
   return (
     <div className="mock mock-whatsapp">
@@ -79,8 +85,8 @@ export function WhatsAppMock({ c }: { c: MockContent }) {
       </div>
       <div className="mock-wa-chat">
         <div className="mock-wa-bubble">
-          <GeneratedMedia alt={c.mediaAlt} ratio="square" />
-          <p>Hola {c.recipient} 👋 {c.caption}</p>
+          <GeneratedMedia alt={c.mediaAlt} imageUrl={c.imageUrl} ratio="square" />
+          <p>Hola {c.recipient}. {c.caption}</p>
           <button type="button" className="mock-wa-cta">{c.cta}</button>
           <span className="mock-wa-time">9:41 <CheckCheck size={13} /></span>
         </div>
@@ -89,7 +95,6 @@ export function WhatsAppMock({ c }: { c: MockContent }) {
   )
 }
 
-/* ── Instagram ──────────────────────────────────────────────────── */
 export function InstagramMock({ c }: { c: MockContent }) {
   return (
     <div className="mock mock-instagram">
@@ -98,7 +103,7 @@ export function InstagramMock({ c }: { c: MockContent }) {
         <strong>{c.handle}</strong>
         <MoreHorizontal size={18} className="mock-ig-more" />
       </div>
-      <GeneratedMedia alt={c.mediaAlt} ratio="square" />
+      <GeneratedMedia alt={c.mediaAlt} imageUrl={c.imageUrl} ratio="square" />
       <div className="mock-ig-actions">
         <Heart size={22} />
         <MessageCircle size={22} />
@@ -114,7 +119,6 @@ export function InstagramMock({ c }: { c: MockContent }) {
   )
 }
 
-/* ── Facebook ───────────────────────────────────────────────────── */
 export function FacebookMock({ c }: { c: MockContent }) {
   return (
     <div className="mock mock-facebook">
@@ -122,12 +126,12 @@ export function FacebookMock({ c }: { c: MockContent }) {
         <span className="mock-avatar mock-avatar-fb">{c.initials}</span>
         <div>
           <strong>{c.brandName}</strong>
-          <small>Publicación · 9:41 · 🌎</small>
+          <small>Publicación · 9:41 · público</small>
         </div>
         <MoreHorizontal size={18} className="mock-fb-more" />
       </div>
       <p className="mock-fb-text">{c.caption} {c.hashtags.join(' ')}</p>
-      <GeneratedMedia alt={c.mediaAlt} ratio="wide" />
+      <GeneratedMedia alt={c.mediaAlt} imageUrl={c.imageUrl} ratio="wide" />
       <div className="mock-fb-cta-row">
         <span>{c.brandName.toLowerCase().replace(/\s/g, '')}.com</span>
         <button type="button">{c.cta}</button>
@@ -141,12 +145,11 @@ export function FacebookMock({ c }: { c: MockContent }) {
   )
 }
 
-/* ── TikTok (carrusel 9:16) ─────────────────────────────────────── */
 export function TikTokMock({ c }: { c: MockContent }) {
   return (
     <div className="mock mock-tiktok">
       <div className="mock-tt-stage">
-        <GeneratedMedia alt={c.mediaAlt} ratio="vertical" />
+        <GeneratedMedia alt={c.mediaAlt} imageUrl={c.imageUrl} ratio="vertical" />
         <div className="mock-tt-topbar">
           <Search size={18} />
           <span className="mock-tt-tabs"><b>Para ti</b> · Siguiendo</span>
@@ -165,7 +168,7 @@ export function TikTokMock({ c }: { c: MockContent }) {
           <strong>@{c.handle}</strong>
           <p>{c.caption}</p>
           <p className="mock-hashtags">{c.hashtags.join(' ')}</p>
-          <span className="mock-tt-music"><Music2 size={13} /> Audio original — {c.brandName}</span>
+          <span className="mock-tt-music"><Music2 size={13} /> Audio original · {c.brandName}</span>
         </div>
       </div>
     </div>

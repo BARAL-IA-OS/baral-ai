@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { Users, HandMetal, ShoppingBag, Rocket, Zap } from 'lucide-react'
 import { Card } from '../ui/Card'
-import { ArrowRight, Users, HandMetal, ShoppingBag, Rocket, Zap } from 'lucide-react'
 import type { RecipeType } from '../../types'
 
 interface ActionCardProps {
@@ -11,26 +11,30 @@ interface ActionCardProps {
 
 const icons: Record<RecipeType, React.ElementType> = {
   reactivacion: Users,
-  bienvenida:   HandMetal,
-  postventa:    ShoppingBag,
-  lanzamiento:  Rocket,
-  propuesta:    Zap,
+  bienvenida: HandMetal,
+  postventa: ShoppingBag,
+  lanzamiento: Rocket,
+  propuesta: Zap,
 }
 
 export function ActionCard({ title, description, type }: ActionCardProps) {
   const Icon = icons[type]
+  const navigate = useNavigate()
 
   return (
     <Card className={`action-card action-card-${type}`}>
-      <span className="action-icon">
-        <Icon size={20} strokeWidth={1.75} />
-      </span>
-      <h3>{title}</h3>
-      <p>{description}</p>
-      <Link to={`/recipe/${type}`}>
-        Configurar
-        <ArrowRight size={14} strokeWidth={2} />
-      </Link>
+      <button
+        type="button"
+        className="action-card-btn"
+        onClick={() => navigate(`/recipe/${type}`)}
+      >
+        <span className="action-icon">
+          <Icon size={22} strokeWidth={1.75} />
+        </span>
+        <h3>{title}</h3>
+        <p>{description}</p>
+        <span className="action-card-cta">Configurar</span>
+      </button>
     </Card>
   )
 }

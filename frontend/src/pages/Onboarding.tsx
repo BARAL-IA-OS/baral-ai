@@ -4,23 +4,25 @@ import { BrandBrainForm } from '../components/onboarding/BrandBrainForm'
 import { CSVUpload } from '../components/onboarding/CSVUpload'
 import { SetupProgress } from '../components/onboarding/SetupProgress'
 import { Spinner } from '../components/ui/Spinner'
-import { hasBrandBrain } from '../hooks/useBrandBrain'
+import { getOnboardingStatus } from '../hooks/useBrandBrain'
+import type { BrandBrain } from '../types'
 
 export function Onboarding() {
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
+  const [brandBrain, setBrandBrain] = useState<BrandBrain | null>(null)
+  const [clientsComplete, setClientsComplete] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get('force') === 'true') {
-      // Diferido para no llamar setState de forma sincrona dentro del effect
-      Promise.resolve().then(() => setChecking(false))
-      return
-    }
+    const force = params.get('force') === 'true'
 
-    hasBrandBrain()
-      .then((exists) => {
-        if (exists) {
+    getOnboardingStatus()
+      .then((status) => {
+        setBrandBrain(status.brandBrain)
+        setClientsComplete(status.clientsComplete)
+
+        if (status.brandBrainComplete && !force) {
           navigate('/dashboard', { replace: true })
         }
       })
@@ -37,18 +39,31 @@ export function Onboarding() {
       <div className="onboarding-heading">
         <span className="onboarding-eyebrow">Configuración inicial</span>
         <h1>Prepara tu espacio en Baral AI</h1>
-        <p>Cuéntanos sobre tu marca para generar campañas más precisas y alineadas con tu negocio.</p>
+        <p>
+          Cuéntanos sobre tu marca para generar campañas más precisas y alineadas con tu negocio.
+        </p>
       </div>
-      <SetupProgress />
+
+      <SetupProgress
+        brandBrainComplete={brandBrain !== null}
+        clientsComplete={clientsComplete}
+      />
+
       <div className="onboarding-layout">
-        <BrandBrainForm />
+        <BrandBrainForm
+          key={brandBrain?.id ?? 'new-brand-brain'}
+          initialBrandBrain={brandBrain}
+        />
         <aside className="onboarding-aside">
           <CSVUpload />
           <div className="onboarding-tip">
-            <span>✦</span>
+            <span>*</span>
             <div>
-              <strong>¿Por qué necesitamos estos datos?</strong>
-              <p>La IA los utiliza como contexto para mantener el tono, la propuesta y los límites de tu marca.</p>
+              <strong>Por que necesitamos estos datos?</strong>
+              <p>
+                La IA los utiliza como contexto para mantener el tono, la propuesta y los
+                limites de tu marca.
+              </p>
             </div>
           </div>
         </aside>

@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 import type {
   AnalyticsSummary,
   ApproveTaskResponse,
+  BrandExtractResponse,
   GenerateContentRequest,
   GenerateContentResponse,
   GenerateImageResponse,
@@ -99,6 +100,30 @@ export function generateImage(prompt: string): Promise<GenerateImageResponse> {
 
 export function getUsage(): Promise<UsageSummary> {
   return request('/api/usage/summary')
+}
+
+// --- Brand Brain: ingestión desde URL o documento ---
+
+export function extractBrandFromUrl(url: string): Promise<BrandExtractResponse> {
+  return request('/api/brand/extract-url', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  })
+}
+
+export async function extractBrandFromFile(file: File): Promise<BrandExtractResponse> {
+  const token = await authToken()
+  const form = new FormData()
+  form.append('file', file)
+  const res = await fetch(`${API_URL}/api/brand/extract-file`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  })
+  if (!res.ok) {
+    throw new Error(await res.text())
+  }
+  return res.json() as Promise<BrandExtractResponse>
 }
 
 // --- Onboarding: importar clientes desde CSV (multipart) ---

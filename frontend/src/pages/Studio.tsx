@@ -1,22 +1,33 @@
 import { useState } from 'react'
-import { Sparkles, Trash2, Megaphone } from 'lucide-react'
+import { Mic, MicOff, Sparkles, Trash2, Megaphone } from 'lucide-react'
 import { SocialPreview } from '../components/preview/SocialPreview'
 import type { MockContent } from '../components/preview/ChannelMocks'
+import { generateContent, generateImage, parseApiError } from '../lib/api'
+import type { ChannelType, ContentItem } from '../types'
 
 interface Campaign {
   id: string
   name: string
   prompt: string
   content: MockContent
+  contentByChannel: Partial<Record<ChannelType, MockContent>>
 }
 
-// Datos de marca de ejemplo. El backend usará el Brand Brain real del usuario.
-const BRAND = { brandName: 'Studio Foto', handle: 'studiofoto', initials: 'SF' }
+type SpeechRecognitionLike = {
+  lang: string
+  interimResults: boolean
+  continuous: boolean
+  start: () => void
+  stop: () => void
+  onresult: ((event: { results: ArrayLike<{ 0: { transcript: string } }> }) => void) | null
+  onend: (() => void) | null
+  onerror: (() => void) | null
+}
 
-// Placeholder de "generación": hoy arma el contenido a partir del prompt en el
-// frontend. Cuando el backend esté listo, esto vendrá del pipeline de IA
-// (texto + imagen/infografía generada).
-function buildContent(prompt: string): MockContent {
+const BRAND = { brandName: 'Studio Foto', handle: 'studiofoto', initials: 'SF' }
+const CHANNELS: ChannelType[] = ['email', 'whatsapp', 'instagram', 'facebook', 'tiktok']
+
+function contentFromText(prompt: string, imageUrl?: string): MockContent {
   const clean = prompt.trim()
   return {
     ...BRAND,
@@ -26,6 +37,20 @@ function buildContent(prompt: string): MockContent {
     hashtags: ['#Campaña', '#StudioFoto', '#Medellín'],
     cta: 'Más información',
     mediaAlt: 'Imagen generada a partir de tu descripción',
+    imageUrl,
+  }
+}
+
+function contentFromItem(item: ContentItem, fallback: string, imageUrl?: string): MockContent {
+  const base = contentFromText(fallback, imageUrl)
+  return {
+    ...base,
+    subject: item.subject || base.subject,
+    caption: item.caption || base.caption,
+    hashtags: item.hashtags?.length ? item.hashtags : base.hashtags,
+    cta: item.cta || base.cta,
+    mediaAlt: item.media_alt || base.mediaAlt,
+    imageUrl,
   }
 }
 
@@ -38,58 +63,132 @@ const SEED: Campaign = {
   id: 'seed',
   name: 'Sesiones de primavera',
   prompt: 'Promociona las nuevas sesiones de fotos familiares de primavera, luz natural y entrega en 48h.',
-  content: buildContent(
+  content: contentFromText(
     'Ya está abierta la agenda de sesiones de primavera. Luz natural, exteriores y entrega en 48h para recuerdos que duran.',
   ),
+  contentByChannel: {},
 }
 
 export function Studio() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([SEED])
   const [selectedId, setSelectedId] = useState<string>(SEED.id)
   const [prompt, setPrompt] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
-  const selected = campaigns.find((c) => c.id === selectedId) ?? null
+  const selected = campaigns.find((campaign) => campaign.id === selectedId) ?? null
 
-  function handleGenerate() {
+  async function handleGenerate() {
     const clean = prompt.trim()
-    if (!clean) return
-    const campaign: Campaign = {
-      id: crypto.randomUUID(),
-      name: nameFromPrompt(clean, campaigns.length + 1),
-      prompt: clean,
-      content: buildContent(clean),
+    if (!clean || generating) return
+
+    setGenerating(true)
+    setMessage(null)
+
+    try {
+      const response = await generateContent({ prompt: clean, channels: CHANNELS })
+      const firstMediaPrompt = response.items.find((item) => item.media_alt)?.media_alt
+      let imageUrl: string | undefined
+
+      if (firstMediaPrompt) {
+        try {
+          const image = await generateImage(firstMediaPrompt)
+          imageUrl = image.image_url || (image.image_b64 ? `data:image/png;base64,${image.image_b64}` : undefined)
+        } catch {
+          imageUrl = undefined
+        }
+      }
+
+      const byChannel = response.items.reduce<Partial<Record<ChannelType, MockContent>>>((acc, item) => {
+        acc[item.channel] = contentFromItem(item, clean, imageUrl)
+        return acc
+      }, {})
+
+      const fallback = byChannel.email ?? contentFromText(clean, imageUrl)
+      const campaign: Campaign = {
+        id: crypto.randomUUID(),
+        name: nameFromPrompt(clean, campaigns.length + 1),
+        prompt: clean,
+        content: fallback,
+        contentByChannel: byChannel,
+      }
+
+      setCampaigns((prev) => [campaign, ...prev])
+      setSelectedId(campaign.id)
+      setPrompt('')
+    } catch (error) {
+      setMessage(parseApiError(error))
+    } finally {
+      setGenerating(false)
     }
-    setCampaigns((prev) => [campaign, ...prev])
-    setSelectedId(campaign.id)
-    setPrompt('')
   }
 
   function handleDelete(id: string) {
     setCampaigns((prev) => {
-      const next = prev.filter((c) => c.id !== id)
+      const next = prev.filter((campaign) => campaign.id !== id)
       if (id === selectedId) setSelectedId(next[0]?.id ?? '')
       return next
     })
   }
 
+  function handleVoiceInput() {
+    const SpeechRecognitionCtor =
+      (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionLike }).webkitSpeechRecognition
+
+    if (!SpeechRecognitionCtor) {
+      setMessage('Tu navegador no soporta dictado por voz desde esta pantalla.')
+      return
+    }
+
+    const recognition = new SpeechRecognitionCtor()
+    recognition.lang = 'es-ES'
+    recognition.interimResults = false
+    recognition.continuous = false
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0].transcript)
+        .join(' ')
+      setPrompt((current) => `${current}${current ? ' ' : ''}${transcript}`.trim())
+    }
+    recognition.onend = () => setListening(false)
+    recognition.onerror = () => {
+      setListening(false)
+      setMessage('No se pudo capturar el audio. Inténtalo nuevamente.')
+    }
+    setListening(true)
+    recognition.start()
+  }
+
   return (
     <section className="page studio-page">
-      <div className="dashboard-heading">
-        <h1>Estudio de contenido</h1>
-        <p>Describe tu campaña, genérala y mira cómo quedaría en cada canal.</p>
-      </div>
-
-      <div className="studio-layout">
-        {/* Izquierda: generación + lista de campañas */}
+      <div className="studio-workspace">
         <div className="studio-main">
+          <div className="dashboard-heading studio-heading">
+            <h1>Estudio de contenido</h1>
+            <p>Describe tu campaña, genérala y mira cómo quedaría en cada canal.</p>
+          </div>
+
           <div className="studio-generator">
             <label htmlFor="studio-prompt">¿Qué campaña quieres generar?</label>
-            <textarea
-              id="studio-prompt"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Ej. Anuncia un 2x1 en sesiones de fotos para el Día de la Madre, tono cálido y cercano."
-            />
+            <div className="studio-prompt-wrap">
+              <textarea
+                id="studio-prompt"
+                value={prompt}
+                onChange={(event) => setPrompt(event.target.value)}
+                placeholder="Ej. Anuncia un 2x1 en sesiones de fotos para el Día de la Madre, tono cálido y cercano."
+              />
+              <button
+                type="button"
+                className={`studio-mic-btn ${listening ? 'is-listening' : ''}`}
+                onClick={handleVoiceInput}
+                aria-label="Dictar campaña con micrófono"
+                title="Dictar campaña"
+              >
+                {listening ? <MicOff size={17} /> : <Mic size={17} />}
+              </button>
+            </div>
             <div className="studio-generator-footer">
               <span className="studio-generator-note">
                 La IA generará texto + imagen para cada red.
@@ -97,13 +196,14 @@ export function Studio() {
               <button
                 type="button"
                 className="button button-primary"
-                onClick={handleGenerate}
-                disabled={!prompt.trim()}
+                onClick={() => void handleGenerate()}
+                disabled={!prompt.trim() || generating}
               >
                 <Sparkles size={15} strokeWidth={2} />
-                Generar campaña
+                {generating ? 'Generando...' : 'Generar campaña'}
               </button>
             </div>
+            {message && <p className="form-message form-message-error">{message}</p>}
           </div>
 
           <div className="studio-list">
@@ -113,35 +213,35 @@ export function Studio() {
             </div>
             <div className="studio-list-scroll">
               {campaigns.length === 0 ? (
-                <p className="studio-empty">Aún no has generado campañas. Describe una arriba ↑</p>
+                <p className="studio-empty">Aún no has generado campañas. Describe una arriba.</p>
               ) : (
-                campaigns.map((c) => (
+                campaigns.map((campaign) => (
                   <button
-                    key={c.id}
+                    key={campaign.id}
                     type="button"
-                    className={`studio-card ${c.id === selectedId ? 'is-active' : ''}`}
-                    onClick={() => setSelectedId(c.id)}
+                    className={`studio-card ${campaign.id === selectedId ? 'is-active' : ''}`}
+                    onClick={() => setSelectedId(campaign.id)}
                   >
                     <span className="studio-card-icon">
                       <Megaphone size={16} strokeWidth={1.9} />
                     </span>
                     <span className="studio-card-copy">
-                      <strong>{c.name}</strong>
-                      <small>{c.prompt}</small>
+                      <strong>{campaign.name}</strong>
+                      <small>{campaign.prompt}</small>
                     </span>
                     <span
                       className="studio-card-delete"
                       role="button"
                       tabIndex={0}
                       aria-label="Eliminar campaña"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDelete(c.id)
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        handleDelete(campaign.id)
                       }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.stopPropagation()
-                          handleDelete(c.id)
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.stopPropagation()
+                          handleDelete(campaign.id)
                         }
                       }}
                     >
@@ -154,10 +254,9 @@ export function Studio() {
           </div>
         </div>
 
-        {/* Derecha: vista previa fija */}
         <aside className="studio-preview">
           {selected ? (
-            <SocialPreview content={selected.content} />
+            <SocialPreview content={selected.content} contentByChannel={selected.contentByChannel} />
           ) : (
             <div className="studio-preview-empty">
               <Sparkles size={28} strokeWidth={1.3} />
