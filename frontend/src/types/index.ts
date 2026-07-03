@@ -119,6 +119,14 @@ export interface AnalyticsSummary {
   average_agent_score: number
 }
 
+export interface RegenerateTaskResponse {
+  success: boolean
+  task_id: string
+  draft_content: TaskDraftContent
+  cost_usd: number
+  agent_score: number
+}
+
 // --- Estudio: generación de contenido multicanal ---
 
 // Contenido generado por canal. `subject` solo en email; `hashtags` en redes.
@@ -161,4 +169,16 @@ export interface UsageSummary {
   total_events: number
   by_kind: Record<string, { count: number; cost_usd: number; tokens: number }>
   available: boolean
+}
+
+// Feature A: estrategia guardada (Jhamil)
+export interface SavedStrategy {
+  id: string
+  user_id: string
+  name: string
+  recipe_type: RecipeType
+  params: Record<string, unknown>
+  times_used: number
+  last_used_at?: string
+  created_at: string
 }

@@ -103,10 +103,14 @@ Hecho:
       (`useRecipeRunner`), Preview con detalle de tarea (`useTask` + `getTask`), aprobar y enviar,
       historial y analytics conectados.
 - [x] **Human Gate:** el draft editado en el Preview se envia y se persiste (via `approveTask(id, draft)`).
+- [x] **Preview premium:** layout split (editor + preview en vivo `EmailPreviewMock`), toggle escritorio/movil,
+      **regenerar campo con IA** por seccion, success card post-envio.
+- [x] **Feature A "Mis Estrategias":** `SavedStrategies.tsx` en Dashboard, guardar/eliminar/reusar estrategias.
 - [x] `npm run lint` y `npm run build` pasan.
 
 Pendiente:
 
+- [ ] Conectar el Estudio (`generateContent` / `generateImage`) — endpoints listos, falta la UI.
 - [ ] Cargar Brand Brain real en los mockups del Estudio (hoy usan datos de ejemplo "Studio Foto").
 - [ ] Renderizar la imagen real generada en el preview del Estudio (hoy placeholder).
 - [ ] Conectar "Generar campana" a `POST /api/content/generate`.
@@ -135,8 +139,12 @@ Contratos actuales:
 - `RunRecipeRequest`
 - `RunRecipeResponse`
 - `ApproveTaskResponse`
+- `RegenerateTaskResponse`
 - `ImportClientsResponse`
 - `AnalyticsSummary`
+- `ContentItem` / `GenerateContentResponse` / `GenerateImageResponse` (Estudio)
+- `UsageSummary` (gasto de generación)
+- `SavedStrategy` (Feature A)
 
 > `frontend/src/lib/api.ts` ya esta alineado con las respuestas reales del backend y manda el
 > JWT de Supabase (`Authorization: Bearer`). Funciones listas: `importClients`, `runRecipe`,
@@ -152,11 +160,12 @@ POST /api/recipes/run
 GET  /api/tasks
 GET  /api/tasks/{taskId}             # detalle (para el Preview)
 POST /api/tasks/{taskId}/approve     # acepta draft_content editado (Human Gate)
+POST /api/tasks/{taskId}/regenerate  # regenera UN campo del email con IA — LISTO
 GET  /api/analytics/summary
 POST /api/content/generate          # texto por canal (Estudio) — LISTO
 POST /api/content/image             # imagen por demanda, OpenAI gpt-image-1 — LISTO
-GET  /api/usage/summary             # gasto de generacion del usuario — LISTO (requiere tabla usage_events)
-POST /api/strategies                # Feature A: Mis Estrategias (Sprint 2) — PENDIENTE
+GET  /api/usage/summary             # gasto de generacion del usuario — LISTO
+POST /api/strategies                # Feature A: Mis Estrategias — LISTO
 GET  /api/strategies
 DELETE /api/strategies/{id}
 ```
@@ -260,8 +269,8 @@ Tablas actuales:
 - [x] `brand_brain`
 - [x] `clients`
 - [x] `tasks`
-- [ ] `usage_events` (registro de gasto de generacion — correr `doc/sql_usage_events.sql`)
-- [ ] `saved_strategies` (Feature A, Sprint 2)
+- [x] `usage_events` (registro de gasto de generacion)
+- [x] `saved_strategies` (Feature A: Mis Estrategias)
 
 Storage:
 

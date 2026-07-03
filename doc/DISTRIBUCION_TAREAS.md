@@ -104,25 +104,17 @@
 - [ ] Validar contratos de API contra respuestas reales del backend una vez implementados
 - [ ] Endpoint futuro `POST /api/brand/analyze-url` (segunda ronda, no bloquea MVP)
 
-### Prioridad 6 — Feature A: "Mis Estrategias" — Backend (Sprint 2)
-> Implementar despues de que el flujo de recetas completo este funcionando.
+### Prioridad 6 — Feature A: "Mis Estrategias" — Backend ✅ (2026-07-02, Jhamil)
+- [x] Tabla `saved_strategies` creada en Supabase con RLS.
+- [x] `POST /api/strategies` — guardar estrategia (`{ name, task_id }`).
+- [x] `GET /api/strategies` — listar estrategias del usuario.
+- [x] `DELETE /api/strategies/{id}` — eliminar (ownership check).
+- [x] Router `strategies` registrado en `main.py`.
 
-- [ ] Crear tabla `saved_strategies` en Supabase con RLS activo:
-  ```sql
-  CREATE TABLE saved_strategies (
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id      UUID REFERENCES auth.users(id) NOT NULL,
-    name         TEXT NOT NULL,
-    recipe_type  TEXT NOT NULL,
-    params       JSONB NOT NULL,
-    times_used   INTEGER DEFAULT 0,
-    last_used_at TIMESTAMPTZ,
-    created_at   TIMESTAMPTZ DEFAULT NOW()
-  );
-  ```
-- [ ] `POST /api/strategies` — guardar estrategia (name, recipe_type, params del task_id)
-- [ ] `GET /api/strategies` — listar estrategias del usuario autenticado
-- [ ] `DELETE /api/strategies/{id}` — eliminar (verificar ownership)
+### Extra de Jhamil — Regenerar campo del email con IA ✅ (2026-07-02)
+- [x] `POST /api/tasks/{id}/regenerate` — regenera UN campo (asunto/saludo/cuerpo/cta) con el
+      pipeline, conservando las demas ediciones. Suma costo/tokens y actualiza score.
+- [x] Frontend: boton "Regenerar con IA" por campo en el Preview (`regenerateTaskField` en `api.ts`).
 
 ---
 
@@ -153,33 +145,21 @@
 - [ ] Pulir estados de error con mensajes claros al usuario
 - [ ] Pulir estados de loading con skeleton o spinner consistente
 
-### Prioridad 3 — UX del Flujo de Aprobacion
-- [ ] Badge animado de estado de tarea visible en Dashboard y en Preview
-- [ ] Confirmacion visual post-envio: "X emails enviados · $X.XX USD · Campana guardada"
-- [ ] Opcion de regenerar secciones del email desde la pantalla Preview
+### Prioridad 3 — UX del Flujo de Aprobacion ✅ (2026-07-02, Jhamil)
+- [x] Badge de estado de tarea (`TaskStatusBadge`) en Dashboard, Historial y Preview.
+- [x] Confirmacion visual post-envio (success card: correos enviados, costo, guardar estrategia).
+- [x] Regenerar secciones del email con IA por campo desde el Preview.
 
-### Prioridad 4 — Feature B: Email Preview Visual (Sprint 2)
-> Componente puro de frontend, sin dependencias de backend nuevo.
-> Implementar cuando el flujo de aprobacion basico este funcional.
+### Prioridad 4 — Feature B: Email Preview Visual ✅ (2026-07-02, Jhamil)
+- [x] `EmailPreviewMock.tsx` — simula el email (asunto, saludo, cuerpo, CTA, remitente del Brand Brain).
+- [x] Layout split en el Preview: editor a la izquierda, preview en vivo a la derecha.
+- [x] Toggle de vista Escritorio / Movil (con bezel de celular).
 
-- [ ] Componente `EmailPreviewMock.tsx` — simula visualmente como se ve el email en un cliente de correo
-  - Usa datos de `draft_content` (asunto, saludo, cuerpo, CTA) del task actual
-  - Muestra nombre real del primer destinatario de `recipients[]`
-  - Muestra nombre de empresa de `brand_brain` como remitente
-- [ ] Toggle "Editar / Preview" en la pantalla Preview (`/preview/:taskId`)
-- [ ] Toggle de vista: [Escritorio] / [Movil] (importante — +60% emails en LATAM se abren en movil)
-
-### Prioridad 5 — Feature A: "Mis Estrategias" (Sprint 2)
-> Requiere que Omar entregue los 3 endpoints de estrategias.
-> Implementar despues de que el flujo completo de recetas funcione.
-
-- [ ] Seccion "Mis Estrategias" en el Dashboard — lista de estrategias guardadas del usuario
-- [ ] Boton "Guardar como estrategia" en la pantalla de confirmacion post-campana (COMPLETED)
-  - Modal con input para nombrar la estrategia (ej. "Reactivacion 60 dias - Verano")
-  - Llamada a `POST /api/strategies`
-- [ ] Card de estrategia guardada: nombre, recipe_type, veces ejecutada, ultima vez usada
-- [ ] Clic en card → pre-carga parametros en la receta correspondiente y navega a `/recipe/:type`
-- [ ] Boton eliminar estrategia (llamada a `DELETE /api/strategies/{id}`)
+### Prioridad 5 — Feature A: "Mis Estrategias" — UI ✅ (2026-07-02, Jhamil)
+- [x] Componente `SavedStrategies.tsx` en el Dashboard (lista de estrategias del usuario).
+- [x] Boton "Guardar como estrategia" + modal para nombrarla en la confirmacion post-campana.
+- [x] Card de estrategia; clic → pre-carga params y navega a `/recipe/:type` (via `location.state`).
+- [x] Boton eliminar estrategia (`DELETE /api/strategies/{id}`).
 
 ---
 

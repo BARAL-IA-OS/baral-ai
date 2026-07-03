@@ -1,7 +1,7 @@
 # backend/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import health, auth, onboarding, recipes, tasks, analytics, content, usage
+from routers import health, auth, onboarding, recipes, tasks, analytics, content, usage, strategies
 app = FastAPI(
  title="Baral AI — API",
  description="Motor de ejecución de acciones de negocio con IA",
@@ -28,3 +28,4 @@ app.include_router(content.router, prefix="/api")
 app.include_router(usage.router, prefix="/api")
 app.include_router(tasks.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
+app.include_router(strategies.router, prefix="/api")

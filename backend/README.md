@@ -103,7 +103,9 @@ curl http://localhost:8000/health
 | `GET`  | `/api/tasks?limit=20` | ✅ | Campañas del usuario |
 | `GET`  | `/api/tasks/{id}` | ✅ | Detalle de una campaña (para el Preview) |
 | `POST` | `/api/tasks/{id}/approve` | ✅ | Envía la campaña (Resend) → `COMPLETED`. Acepta `draft_content` editado (Human Gate): lo persiste y lo usa para el envío |
+| `POST` | `/api/tasks/{id}/regenerate` | ✅ | Regenera UN campo del email (asunto/saludo/cuerpo/cta) con el pipeline, conservando el resto |
 | `GET`  | `/api/analytics/summary` | ✅ | KPIs agregados (contrato `AnalyticsSummary`) |
+| `GET`/`POST`/`DELETE` | `/api/strategies[/{id}]` | ✅ | Feature A: guardar/listar/eliminar estrategias (tabla `saved_strategies`) |
 | `POST` | `/api/content/generate` | ✅ | Estudio: genera texto por canal (email/whatsapp/instagram/facebook/tiktok) desde el prompt + Brand Brain |
 | `POST` | `/api/content/image` | ✅ | Estudio: genera UNA imagen (OpenAI `gpt-image-1`) bajo demanda. La guarda en Supabase Storage y devuelve `image_url` + costo real |
 | `GET`  | `/api/usage/summary` | ✅ | Gasto de generación del usuario (texto + imagen). Requiere la tabla `usage_events` (ver `doc/sql_usage_events.sql`) |

@@ -11,6 +11,8 @@ import type {
   Task,
   TaskDraftContent,
   UsageSummary,
+  RegenerateTaskResponse,
+  SavedStrategy,
 } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -118,6 +120,34 @@ export async function importClients(file: File): Promise<ImportClientsResponse> 
   }
 
   return res.json() as Promise<ImportClientsResponse>
+}
+
+export function regenerateTaskField(
+  taskId: string,
+  field: 'asunto' | 'saludo' | 'cuerpo' | 'cta',
+  currentDraft: TaskDraftContent
+): Promise<RegenerateTaskResponse> {
+  return request(`/api/tasks/${taskId}/regenerate`, {
+    method: 'POST',
+    body: JSON.stringify({ field, current_draft: currentDraft }),
+  })
+}
+
+export function getStrategies(): Promise<{ strategies: SavedStrategy[] }> {
+  return request('/api/strategies')
+}
+
+export function createStrategy(name: string, taskId: string): Promise<{ success: boolean; strategy: SavedStrategy }> {
+  return request('/api/strategies', {
+    method: 'POST',
+    body: JSON.stringify({ name, task_id: taskId }),
+  })
+}
+
+export function deleteStrategy(id: string): Promise<{ success: boolean }> {
+  return request(`/api/strategies/${id}`, {
+    method: 'DELETE',
+  })
 }
 
 // --- Utilidad: parsear errores de la API ---

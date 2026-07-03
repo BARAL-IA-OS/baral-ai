@@ -58,7 +58,9 @@ y están alineadas con el backend real:
 | `getTasks(limit?)` | `GET /api/tasks` | `Task[]` |
 | `getTask(id)` | `GET /api/tasks/{id}` | `Task` (detalle para el Preview) |
 | `approveTask(id, draft?)` | `POST /api/tasks/{id}/approve` | `{ status, emails_sent, emails_failed, errors }` |
+| `regenerateTaskField(id, field, draft)` | `POST /api/tasks/{id}/regenerate` | `RegenerateTaskResponse` |
 | `getAnalytics()` | `GET /api/analytics/summary` | `AnalyticsSummary` |
+| `getStrategies()` / `createStrategy(name, taskId)` / `deleteStrategy(id)` | `/api/strategies` | Feature A: Mis Estrategias |
 | `generateContent({ prompt, channels? })` | `POST /api/content/generate` | `{ items: ContentItem[], tokens_used, cost_usd }` — Estudio |
 | `generateImage(prompt)` | `POST /api/content/image` | `{ image_url, image_b64, cost_usd, tokens }` — usa `image_url` (Supabase Storage) |
 | `getUsage()` | `GET /api/usage/summary` | `{ total_cost_usd, by_kind, ... }` — gasto de generación |
