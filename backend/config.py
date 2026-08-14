@@ -18,6 +18,9 @@ MAX_EMAILS_PER_RUN = int(os.getenv("MAX_EMAILS_PER_RUN", "25"))
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
+# Origen publico del frontend, sin slash final (por ejemplo, https://app.vercel.app).
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+
 # Solo para PRUEBAS: DeepSeek es compatible con el SDK de OpenAI (base_url distinto).
 # Si DEEPSEEK_API_KEY esta seteada, el pipeline la usa primero. No cambia el plan real.
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
