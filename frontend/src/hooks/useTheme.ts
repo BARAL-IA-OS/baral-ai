@@ -2,13 +2,14 @@ import { useEffect, useState, useCallback } from 'react'
 
 type Theme = 'light' | 'dark'
 
-const STORAGE_KEY = 'baral-theme'
+// Versioned key makes Baral Eclipse the first-run theme even for users whose
+// browser persisted the former light default under `baral-theme`.
+const STORAGE_KEY = 'baral-theme-eclipse'
 
 function getInitialTheme(): Theme {
   const saved = localStorage.getItem(STORAGE_KEY)
   if (saved === 'light' || saved === 'dark') return saved
-  // Default to light mode
-  return 'light'
+  return 'dark'
 }
 
 export function useTheme() {
@@ -33,6 +34,6 @@ export function useTheme() {
 /** Initialize theme on app load (call once in main.tsx) */
 export function initTheme() {
   const saved = localStorage.getItem(STORAGE_KEY)
-  const theme: Theme = saved === 'dark' ? 'dark' : 'light'
+  const theme: Theme = saved === 'light' ? 'light' : 'dark'
   document.documentElement.setAttribute('data-theme', theme)
 }

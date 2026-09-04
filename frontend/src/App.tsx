@@ -7,6 +7,7 @@ import {
   Routes,
 } from 'react-router-dom'
 import './App.css'
+import './styles/baral-eclipse.css'
 import { Layout } from './components/layout/Layout'
 import { Spinner } from './components/ui/Spinner'
 import { useAuth } from './hooks/useAuth'

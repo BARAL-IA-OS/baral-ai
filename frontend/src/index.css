@@ -75,44 +75,46 @@
 /* ── Dark Theme ─────────────────────────────────────────────────── */
 
 [data-theme="dark"] {
-  /* Fondo elevado (no negro puro) con buena separación bg↔surface */
-  --bg: #0A0A0D;
-  --surface: #161619;
-  --surface-muted: #1F1F24;
-  --surface-elevated: #202027;
+  color-scheme: dark;
 
-  --text: #F5F6F8;
-  --text-muted: #9CA0AB;
-  --text-secondary: #C4C7D0;
+  /* Baral Eclipse: grises medidos de la referencia */
+  --bg: #1B1B1B;
+  --surface: #282A2C;
+  --surface-muted: #222426;
+  --surface-elevated: #333537;
 
-  --border: #2A2B33;
-  --border-strong: #3A3B45;
+  --text: #E5E3D9;
+  --text-muted: #A6A7A1;
+  --text-secondary: #C9C7BE;
 
-  --primary: #8B5CF6;
-  --primary-dark: #7C3AED;
-  --primary-light: #A78BFA;
-  --primary-bg: rgba(139, 92, 246, 0.16);
-  --primary-bg-hover: rgba(139, 92, 246, 0.24);
-  --accent: #FBBF24;
-  --danger: #F87171;
-  --success: #34D399;
-  --warning: #FBBF24;
+  --border: #3A3C3E;
+  --border-strong: #4A4C4F;
 
-  --shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.6);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.55);
+  --primary: #A77BFF;
+  --primary-dark: #8600EF;
+  --primary-light: #D9CCFF;
+  --primary-bg: rgba(167, 123, 255, 0.13);
+  --primary-bg-hover: rgba(167, 123, 255, 0.2);
+  --accent: #2CFFC0;
+  --danger: #FF6B8A;
+  --success: #38D9A9;
+  --warning: #F6C86B;
 
-  --sidebar-bg: #0F0F12;
-  --sidebar-text: #B4B7C0;
-  --sidebar-text-hover: #FFFFFF;
-  --sidebar-border: #22232A;
-  --sidebar-active-bg: linear-gradient(135deg, #7C3AED, #6D28D9);
-  --sidebar-hover-bg: #1C1C22;
-  --sidebar-profile-bg: #161619;
-  --sidebar-profile-hover-bg: #202027;
-  --dropdown-bg: #161619;
-  --dropdown-border: #2A2B33;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.3);
+  --shadow-card: none;
+  --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.22);
+
+  --sidebar-bg: #1B1B1B;
+  --sidebar-text: #A6A7A1;
+  --sidebar-text-hover: #F7F5EF;
+  --sidebar-border: #343638;
+  --sidebar-active-bg: #A77BFF;
+  --sidebar-hover-bg: #282A2C;
+  --sidebar-profile-bg: #222426;
+  --sidebar-profile-hover-bg: #282A2C;
+  --dropdown-bg: #282A2C;
+  --dropdown-border: #414346;
 }
 
 /* ── Global Resets ──────────────────────────────────────────────── */

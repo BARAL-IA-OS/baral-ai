@@ -1,0 +1,328 @@
+/* Baral Eclipse ---------------------------------------------------
+   Capa visual temporal y centralizada para el rediseño oscuro.
+   Se importa después de App.css para neutralizar overrides antiguos
+   mientras los estilos se migran progresivamente por módulo.
+------------------------------------------------------------------ */
+
+[data-theme="dark"] {
+  --eclipse-canvas: #1b1b1b;
+  --eclipse-control: #222426;
+  --eclipse-card: #282a2c;
+  --eclipse-raised: #333537;
+  --eclipse-brand-surface: #342d43;
+  --eclipse-border-soft: #343638;
+  --eclipse-border: #414346;
+  --eclipse-text: #e5e3d9;
+  --eclipse-text-strong: #f7f5ef;
+  --eclipse-muted: #a6a7a1;
+  --eclipse-disabled: #737571;
+  --eclipse-primary: #a77bff;
+  --eclipse-primary-hover: #b99cff;
+  --eclipse-primary-strong: #8600ef;
+  --eclipse-cyan: #2cffc0;
+  --eclipse-blue: #118dff;
+  --eclipse-focus: 0 0 0 3px rgba(167, 123, 255, 0.28);
+  --eclipse-gradient: linear-gradient(135deg, #8600ef 0%, #118dff 100%);
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] #root,
+[data-theme="dark"] .app-shell,
+[data-theme="dark"] .main-panel,
+[data-theme="dark"] .login-page,
+[data-theme="dark"] .welcome-page {
+  background: var(--eclipse-canvas);
+  color: var(--eclipse-text);
+}
+
+[data-theme="dark"] ::selection {
+  color: #1b1622;
+  background: var(--eclipse-primary);
+}
+
+/* Shell and navigation */
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .sidebar.sidebar-collapsed {
+  --sidebar-final-bg: var(--eclipse-canvas);
+  --sidebar-final-text: var(--eclipse-muted);
+  --sidebar-final-strong: var(--eclipse-text-strong);
+  --sidebar-final-border: var(--eclipse-border-soft);
+  --sidebar-final-hover: var(--eclipse-card);
+  --sidebar-final-active: var(--eclipse-primary);
+  --sidebar-final-panel: var(--eclipse-control);
+  --sidebar-final-logo: var(--eclipse-card);
+
+  color: var(--eclipse-muted);
+  background: var(--eclipse-canvas);
+  border-right-color: var(--eclipse-border-soft);
+}
+
+[data-theme="dark"] .sidebar a,
+[data-theme="dark"] .sidebar-footer-actions button,
+[data-theme="dark"] .sidebar-section-title,
+[data-theme="dark"] .sidebar-section-head > span,
+[data-theme="dark"] .sidebar-profile-copy small {
+  color: var(--eclipse-muted);
+}
+
+[data-theme="dark"] .sidebar a:hover,
+[data-theme="dark"] .sidebar-footer-actions button:hover,
+[data-theme="dark"] .sidebar-toggle:hover {
+  color: var(--eclipse-text-strong);
+  background: var(--eclipse-card);
+}
+
+[data-theme="dark"] .sidebar a.active {
+  color: #1b1622;
+  background: var(--eclipse-primary);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .sidebar a.active svg {
+  color: #1b1622;
+}
+
+[data-theme="dark"] .sidebar-progress-card,
+[data-theme="dark"] .account-dropdown {
+  color: var(--eclipse-text);
+  background: var(--eclipse-control);
+  border-color: var(--eclipse-border-soft);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .sidebar-logo-mark {
+  background: var(--eclipse-card);
+}
+
+[data-theme="dark"] .sidebar-avatar,
+[data-theme="dark"] .account-dd-avatar {
+  background: var(--eclipse-gradient);
+}
+
+/* Shared surfaces */
+[data-theme="dark"] .card,
+[data-theme="dark"] .action-card,
+[data-theme="dark"] .metric-card,
+[data-theme="dark"] .dashboard-hero-copy,
+[data-theme="dark"] .dashboard-status-card,
+[data-theme="dark"] .dashboard-panel,
+[data-theme="dark"] .brand-brain-form,
+[data-theme="dark"] .csv-card,
+[data-theme="dark"] .studio-generator,
+[data-theme="dark"] .studio-card,
+[data-theme="dark"] .recipe-topbar,
+[data-theme="dark"] .recipe-main-card,
+[data-theme="dark"] .recipe-side-panel,
+[data-theme="dark"] .recipe-pipeline-card,
+[data-theme="dark"] .inline-preview-card,
+[data-theme="dark"] .profile-card,
+[data-theme="dark"] .profile-hero,
+[data-theme="dark"] .history-hero,
+[data-theme="dark"] .history-action-card,
+[data-theme="dark"] .clients-table-wrap,
+[data-theme="dark"] .empty-state {
+  color: var(--eclipse-text);
+  background: var(--eclipse-card);
+  border-color: var(--eclipse-border-soft);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .dashboard-hero-copy,
+[data-theme="dark"] .dashboard-status-card,
+[data-theme="dark"] .dashboard-panel,
+[data-theme="dark"] .action-card,
+[data-theme="dark"] .metric-card {
+  background: var(--eclipse-card);
+  border-color: var(--eclipse-border-soft);
+}
+
+[data-theme="dark"] .strategy-card,
+[data-theme="dark"] .recent-row,
+[data-theme="dark"] .recipe-side-step,
+[data-theme="dark"] .recipe-info-box,
+[data-theme="dark"] .recipe-audit-row span {
+  color: var(--eclipse-text);
+  background: var(--eclipse-control);
+  border-color: var(--eclipse-border-soft);
+}
+
+[data-theme="dark"] .action-card:first-child {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(167, 123, 255, 0.15), transparent 42%),
+    var(--eclipse-card);
+}
+
+[data-theme="dark"] .action-card::after {
+  background: linear-gradient(90deg, var(--eclipse-primary), var(--eclipse-blue));
+}
+
+[data-theme="dark"] .action-card:hover,
+[data-theme="dark"] .studio-card:hover,
+[data-theme="dark"] .history-action-card:hover,
+[data-theme="dark"] .strategy-card:hover,
+[data-theme="dark"] .recent-row:hover {
+  border-color: rgba(167, 123, 255, 0.56);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+/* Typography */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] strong,
+[data-theme="dark"] label {
+  color: var(--eclipse-text-strong);
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] small,
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] .panel-muted,
+[data-theme="dark"] .clients-cell-empty {
+  color: var(--eclipse-muted);
+}
+
+[data-theme="dark"] .dashboard-eyebrow,
+[data-theme="dark"] .section-heading span,
+[data-theme="dark"] .panel-heading span,
+[data-theme="dark"] .onboarding-eyebrow {
+  color: var(--eclipse-primary-hover);
+}
+
+/* Controls */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+[data-theme="dark"] .login-field > div,
+[data-theme="dark"] .clients-search,
+[data-theme="dark"] .info-modal-link,
+[data-theme="dark"] .info-modal-write textarea,
+[data-theme="dark"] .brand-extract-source,
+[data-theme="dark"] .brand-extract-field textarea {
+  color: var(--eclipse-text);
+  background: var(--eclipse-control);
+  border-color: var(--eclipse-border);
+  box-shadow: none;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--eclipse-disabled);
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] .login-field > div:focus-within,
+[data-theme="dark"] .clients-search:focus-within,
+[data-theme="dark"] .info-modal-link:focus-within {
+  outline: none;
+  border-color: var(--eclipse-primary);
+  box-shadow: var(--eclipse-focus);
+}
+
+[data-theme="dark"] .button-primary,
+[data-theme="dark"] .login-submit,
+[data-theme="dark"] .welcome-cta {
+  color: #1b1622;
+  background: var(--eclipse-primary);
+  border-color: var(--eclipse-primary);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .button-primary:hover:not(:disabled),
+[data-theme="dark"] .login-submit:hover:not(:disabled),
+[data-theme="dark"] .welcome-cta:hover:not(:disabled) {
+  color: #1b1622;
+  background: var(--eclipse-primary-hover);
+  border-color: var(--eclipse-primary-hover);
+  box-shadow: 0 10px 28px rgba(167, 123, 255, 0.2);
+}
+
+[data-theme="dark"] .button-secondary,
+[data-theme="dark"] .segmented-control,
+[data-theme="dark"] .history-tabs {
+  color: var(--eclipse-text);
+  background: var(--eclipse-raised);
+  border-color: var(--eclipse-border);
+}
+
+/* Modal and overlays */
+[data-theme="dark"] .modal,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .info-modal {
+  color: var(--eclipse-text);
+  background: var(--eclipse-raised);
+  border-color: var(--eclipse-border);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .modal-backdrop,
+[data-theme="dark"] .modal-overlay,
+[data-theme="dark"] .info-modal-backdrop {
+  background: rgba(0, 0, 0, 0.64);
+  backdrop-filter: blur(4px);
+}
+
+[data-theme="dark"] .info-modal-dropzone,
+[data-theme="dark"] .brand-extract-drop,
+[data-theme="dark"] .upload-box,
+[data-theme="dark"] .panel-empty {
+  color: var(--eclipse-muted);
+  background: var(--eclipse-control);
+  border-color: var(--eclipse-border);
+}
+
+/* Data tables */
+[data-theme="dark"] .clients-table,
+[data-theme="dark"] .clients-table th,
+[data-theme="dark"] .clients-table td {
+  color: var(--eclipse-text);
+  border-color: var(--eclipse-border-soft);
+}
+
+[data-theme="dark"] .clients-table thead,
+[data-theme="dark"] .clients-table th {
+  color: var(--eclipse-muted);
+  background: var(--eclipse-control);
+}
+
+[data-theme="dark"] .clients-table tbody tr:hover {
+  background: rgba(167, 123, 255, 0.07);
+}
+
+/* Authentication */
+[data-theme="dark"] .login-panel {
+  background: var(--eclipse-canvas);
+}
+
+[data-theme="dark"] .login-showcase {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(167, 123, 255, 0.2), transparent 30%),
+    radial-gradient(circle at 82% 76%, rgba(17, 141, 255, 0.12), transparent 34%),
+    var(--eclipse-canvas);
+}
+
+[data-theme="dark"] .login-card {
+  color: var(--eclipse-text);
+  background: var(--eclipse-card);
+  border-color: var(--eclipse-border-soft);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+}
+
+/* Accessible focus for non-form controls */
+[data-theme="dark"] :where(button, a, [role="button"]):focus-visible {
+  outline: none;
+  box-shadow: var(--eclipse-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"] *,
+  [data-theme="dark"] *::before,
+  [data-theme="dark"] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
