@@ -17,7 +17,11 @@ import type {
   SavedStrategy,
 } from '../types'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+const API_URL =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.PROD
+    ? 'https://baral-ai-api.onrender.com'
+    : 'http://localhost:8000')
 
 async function authToken(): Promise<string> {
   const { data } = await supabase.auth.getSession()
