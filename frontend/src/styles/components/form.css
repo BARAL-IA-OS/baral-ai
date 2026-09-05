@@ -1,0 +1,8 @@
+:where(input, textarea, select)::placeholder {
+  color: var(--baral-text-disabled);
+}
+
+:where(input, textarea, select):disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}

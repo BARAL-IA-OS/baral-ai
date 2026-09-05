@@ -1,0 +1,37 @@
+:root {
+  --baral-bg-canvas: #1b1b1b;
+  --baral-bg-sidebar: #1b1b1b;
+  --baral-surface-0: #222426;
+  --baral-surface-1: #282a2c;
+  --baral-surface-2: #333537;
+  --baral-surface-brand: #342d43;
+  --baral-border: #414346;
+  --baral-border-soft: #343638;
+  --baral-primary: #a77bff;
+  --baral-primary-hover: #b99cff;
+  --baral-primary-strong: #8600ef;
+  --baral-primary-soft: #d9ccff;
+  --baral-cyan: #2cffc0;
+  --baral-blue: #118dff;
+  --baral-success: #38d9a9;
+  --baral-warning: #f6c86b;
+  --baral-danger: #ff6b8a;
+  --baral-text: #e5e3d9;
+  --baral-text-strong: #f7f5ef;
+  --baral-text-muted: #a6a7a1;
+  --baral-text-disabled: #737571;
+  --baral-gradient-brand: linear-gradient(160deg, #2cffc0 0%, #118dff 45%, #8600ef 100%);
+  --baral-focus-ring: 0 0 0 3px rgb(167 123 255 / 28%);
+  --sidebar-width: 264px;
+  --sidebar-collapsed-width: 72px;
+  --content-max-width: 1280px;
+  --page-padding-x: clamp(20px, 3vw, 40px);
+  --page-padding-y: 32px;
+  --section-gap: 28px;
+  --card-gap: 16px;
+  --control-height: 42px;
+  --control-height-sm: 34px;
+  --radius-control: 12px;
+  --radius-card: 16px;
+  --radius-panel: 20px;
+}

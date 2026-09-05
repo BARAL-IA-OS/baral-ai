@@ -3,7 +3,24 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
-from routers import health, auth, onboarding, recipes, tasks, analytics, content, usage, strategies, brand, clients, creative, audits
+from routers import (
+    analytics,
+    assets,
+    audits,
+    auth,
+    brand,
+    business_dna,
+    catalog,
+    clients,
+    content,
+    creative,
+    health,
+    onboarding,
+    recipes,
+    strategies,
+    tasks,
+    usage,
+)
 
 cors_origins = {
     "http://localhost:5173",
@@ -32,6 +49,9 @@ app.include_router(onboarding.router, prefix="/api/onboarding")
 app.include_router(recipes.router, prefix="/api")
 app.include_router(content.router, prefix="/api")
 app.include_router(brand.router, prefix="/api")
+app.include_router(business_dna.router, prefix="/api")
+app.include_router(catalog.router, prefix="/api")
+app.include_router(assets.router, prefix="/api")
 app.include_router(usage.router, prefix="/api")
 app.include_router(tasks.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")

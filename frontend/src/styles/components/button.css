@@ -1,0 +1,29 @@
+.button {
+  min-height: var(--control-height);
+  border-radius: var(--radius-control);
+  transition: color 170ms ease, background-color 170ms ease, border-color 170ms ease, transform 170ms ease;
+}
+
+.button-primary {
+  color: #1b1622;
+  background: var(--baral-primary);
+  border-color: var(--baral-primary);
+}
+
+.button-primary:hover:not(:disabled) {
+  color: #1b1622;
+  background: var(--baral-primary-hover);
+  border-color: var(--baral-primary-hover);
+}
+
+.button-secondary {
+  color: var(--baral-text-strong);
+  background: var(--baral-surface-2);
+  border-color: var(--baral-border);
+}
+
+.button-ghost {
+  color: var(--baral-text-muted);
+  background: transparent;
+  border-color: transparent;
+}

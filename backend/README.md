@@ -1,5 +1,9 @@
 # 🤖 Baral AI — Backend Engine
 
+> El módulo ADN del negocio, catálogo, recursos privados y Clientes 360 se documenta en
+> [`doc/BUSINESS_DNA_CONTRACT.md`](../doc/BUSINESS_DNA_CONTRACT.md). Antes de usarlo se deben
+> aplicar, en orden, las migraciones de `supabase/migrations`.
+
 Motor de ejecución de acciones de negocio con IA para **Baral AI**. FastAPI + `uv`.
 **Backend Fase 1 (Prioridades 1-4): completo y probado contra servicios reales.**
 

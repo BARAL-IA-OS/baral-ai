@@ -96,7 +96,8 @@ export function Studio() {
 
   async function saveChannel() {
     if (!campaignId || !campaign || saving) return
-    setSaving(true); setError('')
+    setSaving(true)
+    setError('')
     try {
       const response = await updateCampaignChannel(campaignId, selectedChannel, campaign.content_by_channel[selectedChannel] || {})
       setCampaign(response.campaign)

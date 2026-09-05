@@ -1,0 +1,20 @@
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+[data-theme='dark'] body {
+  min-width: 320px;
+  color: var(--baral-text);
+  background: var(--baral-bg-canvas);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:where(button, a, input, textarea, select):focus-visible {
+  outline: none;
+  box-shadow: var(--baral-focus-ring);
+}

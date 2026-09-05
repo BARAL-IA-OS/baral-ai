@@ -1,0 +1,7 @@
+.card {
+  color: var(--baral-text);
+  background: var(--baral-surface-1);
+  border: 1px solid var(--baral-border-soft);
+  border-radius: var(--radius-card);
+  box-shadow: none;
+}

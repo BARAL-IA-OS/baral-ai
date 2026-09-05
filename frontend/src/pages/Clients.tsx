@@ -1,229 +1,107 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Users, Search, Trash2, Mail, Phone, ShoppingBag, Upload } from 'lucide-react'
-import { getClients, deleteClient, parseApiError } from '../lib/api'
-import type { Client } from '../types'
+import { useCallback, useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, CircleAlert, Mail, Megaphone, Pencil, Phone, Plus, Save, Search, Trash2, Upload, Users } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ClientFormDrawer } from '../features/clients/components/ClientFormDrawer'
+import { ClientImportDrawer } from '../features/clients/components/ClientImportDrawer'
+import { createClient, deleteClient, getClients, getClientSegments, getClientStats, saveClientSegment, updateClient } from '../features/clients/api'
+import type { Client360, Client360Input, ClientLifecycleStatus, ClientSegment, ClientStats } from '../features/clients/types'
+import { parseApiError } from '../lib/api'
 import { Spinner } from '../components/ui/Spinner'
-import { CSVUpload } from '../components/onboarding/CSVUpload'
+import { InputField } from '../components/ui/FormField'
 
-function formatRelativeDate(dateStr?: string) {
-  if (!dateStr) return null
-  const date = new Date(dateStr)
-  if (isNaN(date.getTime())) return dateStr
-  const ms = Date.now() - date.getTime()
-  const days = Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)))
-  
-  if (days === 0) return 'Hoy'
-  if (days === 1) return 'Ayer'
-  if (days < 30) return `Hace ${days} días`
-  if (days < 60) return 'Hace 1 mes'
-  if (days < 365) return `Hace ${Math.floor(days / 30)} meses`
-  return `Hace ${Math.floor(days / 365)} año(s)`
+const statusLabels: Record<ClientLifecycleStatus, string> = {
+  new: 'Nuevo', active: 'Activo', inactive: 'Inactivo', vip: 'VIP', do_not_contact: 'No contactar',
 }
 
 export function Clients() {
-  const [clients, setClients] = useState<Client[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const [clients, setClients] = useState<Client360[]>([])
+  const [stats, setStats] = useState<ClientStats>({ total: 0, active: 0, inactive: 0, new: 0, withoutContact: 0 })
+  const [segments, setSegments] = useState<ClientSegment[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [deleting, setDeleting] = useState<string | null>(null)
-  const [showImportModal, setShowImportModal] = useState(false)
+  const [status, setStatus] = useState('')
+  const [source, setSource] = useState('')
+  const [interest, setInterest] = useState('')
+  const [product, setProduct] = useState('')
+  const [purchasedAfter, setPurchasedAfter] = useState('')
+  const [purchasedBefore, setPurchasedBefore] = useState('')
+  const [sort, setSort] = useState<'nombre' | 'created_at' | 'ultima_compra' | 'lifecycle_status'>('nombre')
+  const [direction, setDirection] = useState<'asc' | 'desc'>('asc')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [editing, setEditing] = useState<Client360 | null | 'new'>(null)
+  const [showImport, setShowImport] = useState(false)
+  const [showSegmentSave, setShowSegmentSave] = useState(false)
+  const [segmentName, setSegmentName] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true); setError(null)
+    try {
+      const [clientResult, statsResult, segmentResult] = await Promise.all([
+        getClients({ page, pageSize: 25, search, status, source, interest, product, purchasedAfter, purchasedBefore, sort, direction }), getClientStats(), getClientSegments(),
+      ])
+      setClients(clientResult.clients); setTotal(clientResult.total); setStats(statsResult); setSegments(segmentResult.segments)
+    } catch (reason) { setError(parseApiError(reason)) } finally { setLoading(false) }
+  }, [direction, interest, page, product, purchasedAfter, purchasedBefore, search, sort, source, status])
 
   useEffect(() => {
-    loadClients()
-  }, [])
+    const timer = window.setTimeout(() => void load(), 250)
+    return () => window.clearTimeout(timer)
+  }, [load])
 
-  async function loadClients() {
-    setLoading(true)
-    setError(null)
+  async function save(input: Client360Input) {
+    setSaving(true); setError(null)
     try {
-      const res = await getClients()
-      setClients(res.clients)
-    } catch (err) {
-      setError(parseApiError(err))
-    } finally {
-      setLoading(false)
-    }
+      const payload = {
+        ...input,
+        email: input.email || null,
+        telefono: input.telefono || null,
+        ultima_compra: input.ultima_compra || null,
+      }
+      if (editing === 'new') await createClient(payload)
+      else if (editing) await updateClient(editing.id, payload)
+      setEditing(null); await load()
+    } catch (reason) { setError(parseApiError(reason)) } finally { setSaving(false) }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Eliminar este cliente?')) return
-    setDeleting(id)
-    try {
-      await deleteClient(id)
-      setClients((prev) => prev.filter((c) => c.id !== id))
-    } catch (err) {
-      setError(parseApiError(err))
-    } finally {
-      setDeleting(null)
-    }
+  async function remove(client: Client360) {
+    if (!window.confirm(`Eliminar a ${client.nombre}?`)) return
+    try { await deleteClient(client.id); await load() } catch (reason) { setError(parseApiError(reason)) }
   }
 
-  const filtered = clients.filter((c) => {
-    const q = search.toLowerCase()
-    return (
-      c.nombre.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q) ||
-      (c.telefono?.toLowerCase().includes(q) ?? false) ||
-      (c.producto?.toLowerCase().includes(q) ?? false)
-    )
-  })
+  async function createSegment() {
+    const name = segmentName.trim()
+    if (!name) return
+    const filters = selected.size > 0
+      ? { clientIds: Array.from(selected) }
+      : { status: status || undefined, search: search || undefined, source: source || undefined, interest: interest || undefined, product: product || undefined, purchasedAfter: purchasedAfter || undefined, purchasedBefore: purchasedBefore || undefined }
+    try { await saveClientSegment({ name, filters }); setSegmentName(''); setShowSegmentSave(false); setSelected(new Set()); await load() } catch (reason) { setError(parseApiError(reason)) }
+  }
 
+  function toggleSort(nextSort: typeof sort) {
+    if (sort === nextSort) setDirection((value) => value === 'asc' ? 'desc' : 'asc')
+    else { setSort(nextSort); setDirection('asc') }
+  }
+
+  const pages = Math.max(1, Math.ceil(total / 25))
   return (
-    <section className="page clients-page">
-      <div className="clients-header">
-        <div className="clients-header-left">
-          <div className="clients-icon-wrap">
-            <Users size={20} strokeWidth={1.75} />
-          </div>
-          <div>
-            <h1>Clientes</h1>
-            <p>
-              {clients.length} cliente{clients.length !== 1 ? 's' : ''} importados
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          className="button button-primary"
-          onClick={() => setShowImportModal(true)}
-        >
-          <Upload size={15} strokeWidth={2} />
-          Importar CSV
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="clients-search">
-        <Search size={16} strokeWidth={1.75} className="clients-search-icon" />
-        <input
-          type="text"
-          placeholder="Buscar por nombre, email, telefono o producto..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {error && <div className="error-banner">{error}</div>}
-
-      {loading ? (
-        <Spinner label="Cargando clientes..." />
-      ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">
-            <Users size={24} strokeWidth={1.75} />
-          </div>
-          <strong>
-            {clients.length === 0
-              ? 'No hay clientes importados'
-              : 'Sin resultados'}
-          </strong>
-          <p>
-            {clients.length === 0
-              ? 'Importa tu base de clientes desde un archivo CSV para empezar.'
-              : `No se encontraron clientes con "${search}".`}
-          </p>
-          {clients.length === 0 && (
-            <Link to="/onboarding?force=true">Ir a importar clientes →</Link>
-          )}
-        </div>
-      ) : (
-        <div className="clients-table-wrap">
-          <table className="clients-table">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Telefono</th>
-                <th>Producto</th>
-                <th>Ultima compra</th>
-                <th aria-label="Acciones" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((client) => (
-                <tr key={client.id}>
-                  <td>
-                    <span className="clients-name">{client.nombre}</span>
-                  </td>
-                  <td>
-                    <span className="clients-cell-icon">
-                      <Mail size={13} strokeWidth={1.75} />
-                      {client.email}
-                    </span>
-                  </td>
-                  <td>
-                    {client.telefono ? (
-                      <span className="clients-cell-icon">
-                        <Phone size={13} strokeWidth={1.75} />
-                        {client.telefono}
-                      </span>
-                    ) : (
-                      <span className="clients-cell-empty">—</span>
-                    )}
-                  </td>
-                  <td>
-                    {client.producto ? (
-                      <span className="badge badge-product">
-                        <ShoppingBag size={12} strokeWidth={2} />
-                        {client.producto}
-                      </span>
-                    ) : (
-                      <span className="clients-cell-empty">—</span>
-                    )}
-                  </td>
-                  <td>
-                    {client.ultima_compra ? (
-                      <div className="clients-date-col">
-                        <strong>{formatRelativeDate(client.ultima_compra)}</strong>
-                        <span className="clients-date-raw">{new Date(client.ultima_compra).toLocaleDateString('es-BO', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}</span>
-                      </div>
-                    ) : (
-                      <span className="clients-cell-empty">—</span>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="clients-delete-btn"
-                      disabled={deleting === client.id}
-                      onClick={() => void handleDelete(client.id)}
-                      aria-label={`Eliminar ${client.nombre}`}
-                    >
-                      <Trash2 size={14} strokeWidth={1.75} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {showImportModal && (
-        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
-          <div className="modal-content csv-import-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Importar base de clientes</h2>
-              <button type="button" className="modal-close" onClick={() => setShowImportModal(false)}>
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              <CSVUpload onSuccess={() => {
-                // Refresh clients in the background
-                loadClients()
-                // Auto close modal after a short delay so user sees success message
-                setTimeout(() => setShowImportModal(false), 2000)
-              }} />
-            </div>
-          </div>
-        </div>
-      )}
+    <section className="page clients-360-page">
+      <div className="feature-page-header"><div><span className="page-eyebrow"><Users size={15} /> Gestión</span><h1>Clientes 360</h1><p>Organiza tu base, crea segmentos y prepara audiencias para campañas.</p></div><div className="header-actions"><button type="button" className="button button-secondary" onClick={() => setShowImport(true)}><Upload size={17} /> Importar CSV</button><button type="button" className="button button-primary" onClick={() => setEditing('new')}><Plus size={17} /> Agregar cliente</button></div></div>
+      <div className="client-stats-row"><div><strong>{stats.total}</strong><span>Total</span></div><div><strong>{stats.active}</strong><span>Activos</span></div><div><strong>{stats.inactive}</strong><span>Inactivos</span></div><div><strong>{stats.new}</strong><span>Nuevos</span></div><div><strong>{stats.withoutContact}</strong><span>Sin contacto</span></div></div>
+      <div className="clients-toolbar"><label className="search-control"><Search size={17} /><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Buscar nombre, email, teléfono o producto…" /></label><select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1) }}><option value="">Todos los estados</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><button type="button" className="button button-secondary" onClick={() => setShowSegmentSave(true)}><Save size={16} /> Guardar segmento</button></div>
+      {showSegmentSave && <div className="segment-save-panel"><InputField label="Nombre del segmento" value={segmentName} autoFocus onChange={(event) => setSegmentName(event.target.value)} placeholder="Ej. Clientes VIP de la web" /><button type="button" className="button button-secondary" onClick={() => setShowSegmentSave(false)}>Cancelar</button><button type="button" className="button button-primary" disabled={!segmentName.trim()} onClick={() => void createSegment()}>Guardar</button></div>}
+      <details className="advanced-client-filters"><summary>Filtros avanzados</summary><div><InputField label="Origen exacto" value={source} onChange={(event) => { setSource(event.target.value); setPage(1) }} placeholder="Ej. Web" /><InputField label="Producto exacto" value={product} onChange={(event) => { setProduct(event.target.value); setPage(1) }} /><InputField label="Interés exacto" value={interest} onChange={(event) => { setInterest(event.target.value); setPage(1) }} /><InputField label="Compró desde" type="date" value={purchasedAfter} onChange={(event) => { setPurchasedAfter(event.target.value); setPage(1) }} /><InputField label="Compró hasta" type="date" value={purchasedBefore} onChange={(event) => { setPurchasedBefore(event.target.value); setPage(1) }} /></div></details>
+      {segments.length > 0 && <div className="segment-row"><span>Segmentos:</span>{segments.map((segment) => <button type="button" key={segment.id} title="Crear campaña con este segmento" aria-label={`Crear campaña con el segmento ${segment.name}`} onClick={() => navigate(`/studio?segmentId=${segment.id}`)}>{segment.name}<Megaphone size={14} /></button>)}</div>}
+      {selected.size > 0 && <div className="selection-bar"><strong>{selected.size} clientes seleccionados</strong><span>La selección está lista para convertirse en segmento.</span><button type="button" onClick={() => setShowSegmentSave(true)}><Save size={16} /> Guardar selección</button></div>}
+      {error && <div className="error-banner"><CircleAlert size={17} />{error}</div>}
+      {loading ? <Spinner label="Cargando clientes…" /> : clients.length === 0 ? <div className="empty-state"><Users size={28} /><strong>No encontramos clientes</strong><p>Agrega un cliente o importa un CSV para comenzar.</p></div> : <div className="clients-table-panel"><table className="clients-360-table"><thead><tr><th><input type="checkbox" aria-label="Seleccionar página" checked={clients.length > 0 && clients.every((client) => selected.has(client.id))} onChange={(event) => setSelected((current) => { const next = new Set(current); clients.forEach((client) => event.target.checked ? next.add(client.id) : next.delete(client.id)); return next })} /></th><th><button type="button" onClick={() => toggleSort('nombre')}>Cliente</button></th><th>Contacto</th><th>Interés</th><th><button type="button" onClick={() => toggleSort('lifecycle_status')}>Estado</button></th><th><button type="button" onClick={() => toggleSort('ultima_compra')}>Última compra</button></th><th aria-label="Acciones" /></tr></thead><tbody>{clients.map((client) => <tr key={client.id}><td><input type="checkbox" aria-label={`Seleccionar ${client.nombre}`} checked={selected.has(client.id)} onChange={() => setSelected((current) => { const next = new Set(current); if (next.has(client.id)) next.delete(client.id); else next.add(client.id); return next })} /></td><td><button type="button" className="client-name-button" onClick={() => setEditing(client)}><strong>{client.nombre}</strong><span>{client.company || client.source || 'Sin empresa'}</span></button></td><td><span className="client-contact">{client.email && <small><Mail size={13} />{client.email}</small>}{client.telefono && <small><Phone size={13} />{client.telefono}</small>}{!client.email && !client.telefono && <em>Sin datos</em>}</span></td><td>{client.interest || client.producto || '—'}</td><td><span className={`client-status status-${client.lifecycle_status}`}>{statusLabels[client.lifecycle_status]}</span></td><td>{client.ultima_compra ? new Date(client.ultima_compra).toLocaleDateString('es-BO') : '—'}</td><td><div className="row-actions"><button type="button" onClick={() => setEditing(client)} aria-label="Editar"><Pencil size={15} /></button><button type="button" className="danger-action" onClick={() => void remove(client)} aria-label="Eliminar"><Trash2 size={15} /></button></div></td></tr>)}</tbody></table></div>}
+      <div className="pagination"><span>{total} resultados · página {page} de {pages}</span><div><button type="button" disabled={page === 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={17} /></button><button type="button" disabled={page >= pages} onClick={() => setPage((value) => value + 1)}><ChevronRight size={17} /></button></div></div>
+      <ClientFormDrawer key={editing === 'new' ? 'new' : editing?.id || 'closed'} open={editing !== null} client={editing === 'new' ? null : editing} saving={saving} onClose={() => setEditing(null)} onSave={save} />
+      <ClientImportDrawer open={showImport} onClose={() => setShowImport(false)} onSuccess={() => void load()} />
     </section>
   )
 }

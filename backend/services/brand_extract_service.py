@@ -8,6 +8,7 @@ import io
 
 from prompts.brand_extract import BRAND_EXTRACT_SYSTEM
 from services.llm_service import LLMService, LLMUnavailable
+from services.url_security import safe_get
 
 # Tope de texto que se manda al LLM (protege costo/latencia).
 _MAX_CHARS = 8000
@@ -22,17 +23,13 @@ class ExtractionError(Exception):
 
 def extract_from_url(url: str) -> str:
     """Descarga la pagina y devuelve su texto legible."""
-    url = (url or "").strip()
-    if not url.startswith(("http://", "https://")):
-        url = "https://" + url
-
     try:
-        import httpx
-
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; BaralAI/1.0)"}
-        resp = httpx.get(url, headers=headers, follow_redirects=True, timeout=15)
-        resp.raise_for_status()
-        html = resp.text
+        _, body, _ = safe_get(
+            url,
+            max_bytes=3 * 1024 * 1024,
+            allowed_content_prefixes=("text/html",),
+        )
+        html = body.decode("utf-8", errors="replace")
     except Exception as exc:
         raise ExtractionError(f"No se pudo acceder a la pagina: {exc}") from exc
 

@@ -57,7 +57,14 @@ export function Campaigns() {
     })
   }, [])
 
-  const contactableClients = useMemo(() => clients.filter((client) => !client.no_contactar), [clients])
+  const contactableClients = useMemo(
+    () => clients.filter((client) => (
+      !client.no_contactar &&
+      client.lifecycle_status !== 'do_not_contact' &&
+      client.contact_consent !== false
+    )),
+    [clients],
+  )
   const products = useMemo(
     () => Array.from(new Set(contactableClients.map((client) => client.producto).filter(Boolean))) as string[],
     [contactableClients],
