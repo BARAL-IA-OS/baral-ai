@@ -1,0 +1,4 @@
+.text-muted { color: var(--baral-text-muted); }
+.text-danger { color: var(--baral-danger); }
+.surface-card { background: var(--baral-surface-1); }
+.surface-raised { background: var(--baral-surface-2); }

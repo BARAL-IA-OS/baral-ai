@@ -35,6 +35,7 @@ numpy==2.5.0
 openai==2.43.0
 packaging==26.2
 pandas==3.0.3
+pillow==11.3.0
 postgrest==2.31.0
 propcache==0.5.2
 pycparser==3.0

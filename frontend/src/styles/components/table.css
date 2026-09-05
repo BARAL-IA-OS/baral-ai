@@ -1,0 +1,9 @@
+table th {
+  color: var(--baral-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+table td {
+  color: var(--baral-text);
+}

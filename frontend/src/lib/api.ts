@@ -17,18 +17,18 @@ import type {
   SavedStrategy,
 } from '../types'
 
-const API_URL =
+export const API_URL =
   import.meta.env.VITE_API_URL ??
   (import.meta.env.PROD
     ? 'https://baral-ai-api.onrender.com'
     : 'http://localhost:8000')
 
-async function authToken(): Promise<string> {
+export async function authToken(): Promise<string> {
   const { data } = await supabase.auth.getSession()
   return data.session?.access_token ?? ''
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await authToken()
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -45,6 +45,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   return res.json() as Promise<T>
 }
+
+const request = apiRequest
 
 // --- Recetas / pipeline de IA ---
 

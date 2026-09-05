@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from dependencies.auth import CurrentUser, get_current_user
 from services.db_service import get_supabase
 from services.email_service import send_campaign
+from services.client_audience_service import get_eligible_clients
 
 router = APIRouter(tags=["Tasks"])
 
@@ -84,7 +85,16 @@ async def approve_task(
     if task["status"] != "PENDING_APPROVAL":
         raise HTTPException(status_code=400, detail=f"La tarea no esta pendiente de aprobacion (estado: {task['status']})")
 
-    recipients = task.get("recipients") or []
+    stored_recipients = task.get("recipients") or []
+    stored_ids = [recipient["id"] for recipient in stored_recipients if recipient.get("id")]
+    eligible = get_eligible_clients(user.id, stored_ids or None)
+    eligible_ids = {client.get("id") for client in eligible}
+    eligible_emails = {(client.get("email") or "").strip().lower() for client in eligible}
+    recipients = [
+        recipient for recipient in stored_recipients
+        if recipient.get("id") in eligible_ids
+        or (recipient.get("email") or "").strip().lower() in eligible_emails
+    ]
 
     # Draft editado por el usuario (Human Gate): persistir y usar.
     draft = task.get("draft_content") or {}
@@ -151,8 +161,7 @@ async def regenerate_task_field(
     brand = brand_res.data[0]
 
     # Base de clientes del usuario
-    clients_res = sb.table("clients").select("*").eq("user_id", user.id).execute()
-    clients = clients_res.data or []
+    clients = get_eligible_clients(user.id)
 
     # Correr el pipeline para obtener una nueva sugerencia
     try:

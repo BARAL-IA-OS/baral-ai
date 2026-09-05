@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Megaphone, Mic, MicOff, Sparkles, Trash2 } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { SocialPreview } from '../components/preview/SocialPreview'
 import type { MockContent } from '../components/preview/ChannelMocks'
 import { generateContent, generateImage, parseApiError } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import type { ChannelType, ContentItem } from '../types'
+import { getBusinessDNA } from '../features/business-dna/api'
 
 interface Campaign {
   id: string
@@ -33,13 +35,13 @@ type SpeechRecognitionLike = {
   onerror: (() => void) | null
 }
 
-const BRAND = { brandName: 'Studio Foto', handle: 'studiofoto', initials: 'SF' }
+const DEFAULT_BRAND = { brandName: 'Tu negocio', handle: 'tunegocio', initials: 'TN' }
 const CHANNELS: ChannelType[] = ['email', 'whatsapp', 'instagram', 'facebook', 'tiktok']
 
-function contentFromText(prompt: string, imageUrl?: string): MockContent {
+function contentFromText(prompt: string, brand = DEFAULT_BRAND, imageUrl?: string): MockContent {
   const clean = prompt.trim()
   return {
-    ...BRAND,
+    ...brand,
     recipient: 'María García',
     subject: clean.slice(0, 60) || 'Tu nueva campaña',
     caption: clean || 'Describe tu campaña para generar el contenido.',
@@ -50,8 +52,8 @@ function contentFromText(prompt: string, imageUrl?: string): MockContent {
   }
 }
 
-function contentFromItem(item: ContentItem, fallback: string, imageUrl?: string): MockContent {
-  const base = contentFromText(fallback, imageUrl)
+function contentFromItem(item: ContentItem, fallback: string, brand = DEFAULT_BRAND, imageUrl?: string): MockContent {
+  const base = contentFromText(fallback, brand, imageUrl)
   return {
     ...base,
     subject: item.subject || base.subject,
@@ -79,15 +81,27 @@ function rowToCampaign(row: StudioCampaignRow): Campaign {
 }
 
 export function Studio() {
+  const [searchParams] = useSearchParams()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [selectedId, setSelectedId] = useState<string>('')
-  const [prompt, setPrompt] = useState('')
+  const [prompt, setPrompt] = useState(() => searchParams.get('prompt') || '')
+  const [brand, setBrand] = useState(DEFAULT_BRAND)
   const [generating, setGenerating] = useState(false)
   const [loadingCampaigns, setLoadingCampaigns] = useState(true)
   const [listening, setListening] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
   const selected = campaigns.find((campaign) => campaign.id === selectedId) ?? null
+
+  useEffect(() => {
+    getBusinessDNA().then(({ businessDNA }) => {
+      const name = businessDNA?.sections.identity.name?.trim()
+      if (!name) return
+      const initials = name.split(/\s+/).map((word) => word[0]).join('').slice(0, 2).toUpperCase()
+      const handle = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '')
+      setBrand({ brandName: name, handle: handle || 'tunegocio', initials: initials || 'TN' })
+    }).catch(() => undefined)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -151,11 +165,11 @@ export function Studio() {
       }
 
       const byChannel = response.items.reduce<Partial<Record<ChannelType, MockContent>>>((acc, item) => {
-        acc[item.channel] = contentFromItem(item, clean, imageUrl)
+        acc[item.channel] = contentFromItem(item, clean, brand, imageUrl)
         return acc
       }, {})
 
-      const fallback = byChannel.email ?? contentFromText(clean, imageUrl)
+      const fallback = byChannel.email ?? contentFromText(clean, brand, imageUrl)
       const localCampaign: Campaign = {
         id: crypto.randomUUID(),
         name: nameFromPrompt(clean, campaigns.length + 1),

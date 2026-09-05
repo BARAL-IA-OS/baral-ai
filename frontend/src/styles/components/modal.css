@@ -1,0 +1,15 @@
+.modal-backdrop,
+.modal-overlay,
+.info-modal-backdrop {
+  background: rgb(0 0 0 / 64%);
+  backdrop-filter: blur(4px);
+}
+
+.modal,
+.modal-content,
+.info-modal {
+  color: var(--baral-text);
+  background: var(--baral-surface-2);
+  border-color: #46484b;
+  border-radius: var(--radius-panel);
+}

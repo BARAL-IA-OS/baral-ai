@@ -52,7 +52,21 @@ export interface Client {
   ultima_compra?: string
   producto?: string
   created_at?: string
+  lifecycle_status?: 'new' | 'active' | 'inactive' | 'vip' | 'do_not_contact'
+  contact_consent?: boolean
 }
+
+export type {
+  BrandAsset,
+  BrandAssetType,
+  BrandSource,
+  BusinessDNA,
+  BusinessDNASectionName,
+  BusinessDNASections,
+  CatalogItem,
+  ExtractionJob,
+  OnboardingProgress,
+} from '../features/business-dna/types'
 
 export interface TaskDraftContent {
   asunto: string

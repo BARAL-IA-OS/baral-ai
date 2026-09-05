@@ -7,6 +7,7 @@ from prompts.orchestrator import RECIPES
 from services.agent_pipeline import run_pipeline
 from services.db_service import get_supabase
 from services.usage_service import log_usage
+from services.client_audience_service import get_eligible_clients
 
 router = APIRouter(tags=["Recipes"])
 
@@ -31,8 +32,7 @@ async def run_recipe(request: RunRecipeRequest, user: CurrentUser = Depends(get_
     brand = brand_res.data[0]
 
     # Base de clientes del usuario
-    clients_res = sb.table("clients").select("*").eq("user_id", user.id).execute()
-    clients = clients_res.data or []
+    clients = get_eligible_clients(user.id)
 
     # Crea la tarea (status inicial)
     created = (

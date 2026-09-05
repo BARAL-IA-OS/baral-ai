@@ -1,35 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Bell, Menu, PanelLeftClose, PanelLeftOpen, Settings, X } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import {
-  BarChart3,
-  Bell,
-  History,
-  LayoutDashboard,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Settings,
-  Sparkles,
-  Tag,
-  Users,
-} from 'lucide-react'
 import baralLogoDark from '../../assets/login/logo baral dark.png'
+import { navigationGroups } from '../../config/navigation'
+import { getOnboardingProgress } from '../../features/business-dna/api'
 import { useAuth } from '../../hooks/useAuth'
-import { getOnboardingStatus } from '../../hooks/useBrandBrain'
 import { AccountDropdown } from './AccountDropdown'
 
 const STORAGE_KEY = 'baral-sidebar-collapsed'
-
-const strategyItems = [
-  { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-  { to: '/studio', label: 'Estudio', Icon: Sparkles },
-  { to: '/history', label: 'Historial', Icon: History },
-] as const
-
-const insightItems = [
-  { to: '/clients', label: 'Clientes', Icon: Users },
-  { to: '/analytics', label: 'Reportes y Analitica', Icon: BarChart3 },
-  { to: '/onboarding?force=true', label: 'Marca', Icon: Tag },
-] as const
 
 export function Sidebar() {
   const { user } = useAuth()
@@ -37,13 +15,10 @@ export function Sidebar() {
   const email = user?.email ?? 'Sin sesión'
   const initials = email.slice(0, 2).toUpperCase()
   const displayName = email.split('@')[0] || 'Usuario'
-
-  const [collapsed, setCollapsed] = useState(() => {
-    return localStorage.getItem(STORAGE_KEY) === 'true'
-  })
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(STORAGE_KEY) === 'true')
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [brandBrainComplete, setBrandBrainComplete] = useState(false)
-  const [clientsComplete, setClientsComplete] = useState(false)
+  const [progress, setProgress] = useState(0)
   const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -51,124 +26,116 @@ export function Sidebar() {
   }, [collapsed])
 
   useEffect(() => {
-    getOnboardingStatus()
-      .then((status) => {
-        setBrandBrainComplete(status.brandBrainComplete)
-        setClientsComplete(status.clientsComplete)
-      })
-      .catch(() => {
-        setBrandBrainComplete(false)
-        setClientsComplete(false)
-      })
+    getOnboardingProgress()
+      .then((status) => setProgress(status.completionPercentage))
+      .catch(() => setProgress(0))
   }, [])
 
   const toggleCollapse = useCallback(() => {
-    setCollapsed((prev) => !prev)
+    setCollapsed((current) => !current)
     setDropdownOpen(false)
   }, [])
 
-  const toggleDropdown = useCallback(() => {
-    setDropdownOpen((prev) => !prev)
-  }, [])
-
-  const completedSteps = 1 + (brandBrainComplete ? 1 : 0) + (clientsComplete ? 1 : 0)
-
-  function renderItem(
-    item: {
-      to: string
-      label: string
-      Icon: React.ElementType
-      meta?: string
-    },
-  ) {
-    return (
-      <NavLink key={`${item.to}-${item.label}`} to={item.to} title={collapsed ? item.label : undefined}>
-        <item.Icon size={16} strokeWidth={1.85} />
-        <span className="sidebar-label">{item.label}</span>
-        {item.meta && <small className="sidebar-item-meta">{item.meta}</small>}
-        <span className="sidebar-tooltip">{item.label}</span>
-      </NavLink>
-    )
-  }
-
   return (
-    <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}>
-      <div className="sidebar-top">
-        <div className="sidebar-brand">
-          <span className="sidebar-logo-mark">
-            <img src={baralLogoDark} alt="Baral AI" />
-          </span>
-          <strong>Baral AI</strong>
-        </div>
+    <>
+      <button
+        type="button"
+        className="mobile-menu-trigger"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Abrir navegación"
+      >
+        <Menu size={20} />
+      </button>
+      {mobileOpen && (
         <button
           type="button"
-          className="sidebar-toggle"
-          onClick={toggleCollapse}
-          aria-label={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
-        >
-          {collapsed ? (
-            <PanelLeftOpen size={18} strokeWidth={1.75} />
-          ) : (
-            <PanelLeftClose size={18} strokeWidth={1.75} />
-          )}
-        </button>
-      </div>
-
-      <div className="sidebar-progress-card">
-        <span className={`sidebar-progress-ring ${brandBrainComplete ? 'is-complete' : ''}`} />
-        <span>Configuración</span>
-        <strong>{completedSteps}/3</strong>
-      </div>
-
-      <nav className="sidebar-nav">
-        <div className="sidebar-section">
-          <div className="sidebar-section-head">
-            <span>Trabajo</span>
-            <button type="button" aria-label="Nueva estrategia">
-              <Sparkles size={14} strokeWidth={1.7} />
-            </button>
+          className="sidebar-mobile-overlay"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Cerrar navegación"
+        />
+      )}
+      <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''} ${mobileOpen ? 'sidebar-mobile-open' : ''}`}>
+        <div className="sidebar-top">
+          <div className="sidebar-brand">
+            <span className="sidebar-logo-mark"><img src={baralLogoDark} alt="Baral AI" /></span>
+            <strong>Baral AI</strong>
           </div>
-          {strategyItems.map(renderItem)}
+          <button
+            type="button"
+            className="sidebar-toggle sidebar-desktop-toggle"
+            onClick={toggleCollapse}
+            aria-label={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+          >
+            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+          <button
+            type="button"
+            className="sidebar-toggle sidebar-mobile-close"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Cerrar navegación"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        <div className="sidebar-section">
-          <span className="sidebar-section-title">Gestión</span>
-          {insightItems.map(renderItem)}
-        </div>
-      </nav>
-
-      <div className="sidebar-footer-actions">
-        <button type="button" aria-label="Configuración" onClick={() => navigate('/profile')}>
-          <Settings size={16} strokeWidth={1.75} />
-        </button>
-        <button type="button" aria-label="Notificaciones" className="sidebar-bell">
-          <Bell size={16} strokeWidth={1.75} />
-        </button>
-      </div>
-
-      <div className="sidebar-profile-container" ref={profileRef}>
-        <button
-          type="button"
-          className="sidebar-profile"
-          onClick={toggleDropdown}
-          aria-expanded={dropdownOpen}
-        >
-          <span className="sidebar-avatar">{initials}</span>
-          <span className="sidebar-profile-copy">
-            <strong>{displayName}</strong>
-            <small>Administrador</small>
+        <button type="button" className="sidebar-progress-card" onClick={() => navigate('/adn')}>
+          <span className="sidebar-progress-ring" style={{ '--progress': `${progress * 3.6}deg` } as React.CSSProperties}>
+            <small>{progress}</small>
           </span>
+          <span>ADN del negocio</span>
+          <strong>{progress}%</strong>
         </button>
 
-        {dropdownOpen && (
-          <AccountDropdown
-            email={email}
-            initials={initials}
-            onClose={() => setDropdownOpen(false)}
-            anchorRef={profileRef}
-          />
-        )}
-      </div>
-    </aside>
+        <nav className="sidebar-nav" aria-label="Navegación principal">
+          {navigationGroups.map((group) => (
+            <div className="sidebar-section" key={group.label}>
+              <span className="sidebar-section-title">{group.label}</span>
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  title={collapsed ? item.label : undefined}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <item.Icon size={18} strokeWidth={1.75} />
+                  <span className="sidebar-label">{item.label}</span>
+                  <span className="sidebar-tooltip">{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer-actions">
+          <button type="button" aria-label="Configuración" onClick={() => navigate('/profile')}>
+            <Settings size={18} strokeWidth={1.75} />
+          </button>
+          <button type="button" aria-label="Notificaciones" className="sidebar-bell">
+            <Bell size={18} strokeWidth={1.75} />
+          </button>
+        </div>
+
+        <div className="sidebar-profile-container" ref={profileRef}>
+          <button
+            type="button"
+            className="sidebar-profile"
+            onClick={() => setDropdownOpen((current) => !current)}
+            aria-expanded={dropdownOpen}
+          >
+            <span className="sidebar-avatar">{initials}</span>
+            <span className="sidebar-profile-copy"><strong>{displayName}</strong><small>Administrador</small></span>
+          </button>
+          {dropdownOpen && (
+            <AccountDropdown
+              email={email}
+              initials={initials}
+              onClose={() => setDropdownOpen(false)}
+              anchorRef={profileRef}
+            />
+          )}
+        </div>
+      </aside>
+    </>
   )
 }
