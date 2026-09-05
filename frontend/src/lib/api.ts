@@ -15,6 +15,13 @@ import type {
   UsageSummary,
   RegenerateTaskResponse,
   SavedStrategy,
+  BrandBook,
+  CampaignBrief,
+  ChannelType,
+  CreativeCampaign,
+  GeneratedAsset,
+  WebsiteAudit,
+  ContentItem,
 } from '../types'
 
 export const API_URL =
@@ -47,6 +54,15 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
 }
 
 const request = apiRequest
+
+async function requestBlob(path: string): Promise<Blob> {
+  const token = await authToken()
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.blob()
+}
 
 // --- Recetas / pipeline de IA ---
 
@@ -192,6 +208,136 @@ export function deleteClient(id: string): Promise<{ success: boolean }> {
   return request(`/api/clients/${id}`, {
     method: 'DELETE',
   })
+}
+
+// --- Suite creativa de OMAR ---
+
+export function createCampaignBrief(body: {
+  prompt: string
+  product?: string
+  audience?: string
+  aspect_ratio?: string
+  channels: ChannelType[]
+  resources?: string[]
+  idempotency_key?: string
+}): Promise<{ success: boolean; campaign: CreativeCampaign }> {
+  return request('/api/campaigns/brief', { method: 'POST', body: JSON.stringify(body) })
+}
+
+export function updateCampaignBrief(
+  campaignId: string,
+  brief: CampaignBrief,
+): Promise<{ success: boolean; campaign: CreativeCampaign }> {
+  return request(`/api/campaigns/${campaignId}/brief`, {
+    method: 'PATCH', body: JSON.stringify({ brief }),
+  })
+}
+
+export function generateCampaignContent(
+  campaignId: string,
+  brief?: CampaignBrief,
+): Promise<{ success: boolean; campaign: CreativeCampaign }> {
+  return request(`/api/campaigns/${campaignId}/generate`, {
+    method: 'POST', body: JSON.stringify({ brief, idempotency_key: crypto.randomUUID() }),
+  })
+}
+
+export function regenerateCampaignChannel(
+  campaignId: string,
+  channel: ChannelType,
+  instruction = '',
+): Promise<{ success: boolean; campaign: CreativeCampaign }> {
+  return request(`/api/campaigns/${campaignId}/channels/${channel}/regenerate`, {
+    method: 'POST', body: JSON.stringify({ instruction, idempotency_key: crypto.randomUUID() }),
+  })
+}
+
+export function updateCampaignChannel(
+  campaignId: string,
+  channel: ChannelType,
+  content: Partial<ContentItem>,
+): Promise<{ success: boolean; campaign: CreativeCampaign }> {
+  return request(`/api/campaigns/${campaignId}/channels/${channel}`, {
+    method: 'PATCH', body: JSON.stringify({ content }),
+  })
+}
+
+export function getCampaigns(): Promise<{ campaigns: CreativeCampaign[] }> {
+  return request('/api/campaigns')
+}
+
+export function getCampaign(campaignId: string): Promise<{ campaign: CreativeCampaign }> {
+  return request(`/api/campaigns/${campaignId}`)
+}
+
+export function generatePhotoshoot(body: {
+  product: string
+  prompt: string
+  negative_prompt: string
+  scene: string
+  style: string
+  aspect_ratio: string
+  variants: number
+  reference_assets?: string[]
+}): Promise<{ success: boolean; assets: GeneratedAsset[]; cost_usd: number }> {
+  return request('/api/photoshoots/generate', {
+    method: 'POST', body: JSON.stringify({ ...body, idempotency_key: crypto.randomUUID() }),
+  })
+}
+
+export function getGenerationStatus(assetId: string): Promise<{ generation: GeneratedAsset }> {
+  return request(`/api/generations/${assetId}`)
+}
+
+export function saveGeneratedAsset(
+  assetId: string,
+  name: string,
+  campaignId?: string,
+): Promise<{ success: boolean; asset: GeneratedAsset }> {
+  return request(`/api/assets/${assetId}/save`, {
+    method: 'POST', body: JSON.stringify({ name, campaign_id: campaignId }),
+  })
+}
+
+export async function uploadGeneratedAsset(file: File): Promise<{ success: boolean; asset: GeneratedAsset }> {
+  const token = await authToken()
+  const form = new FormData()
+  form.append('file', file)
+  const res = await fetch(`${API_URL}/api/assets/upload`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json() as Promise<{ success: boolean; asset: GeneratedAsset }>
+}
+
+export function createBrandBook(body: {
+  title: string
+  cover_url?: string
+  selected_assets: string[]
+}): Promise<{ success: boolean; brand_book: BrandBook }> {
+  return request('/api/brand-books', { method: 'POST', body: JSON.stringify(body) })
+}
+
+export function exportBrandBookPdf(brandBookId: string): Promise<Blob> {
+  return requestBlob(`/api/brand-books/${brandBookId}/pdf`)
+}
+
+export function authorizeWebsiteAudit(
+  url: string,
+): Promise<{ success: boolean; consent: { id: string; url: string; domain: string; authorized_at: string } }> {
+  return request('/api/audits/consent', {
+    method: 'POST', body: JSON.stringify({ url, accepted: true }),
+  })
+}
+
+export function runWebsiteAudit(consentId: string): Promise<{ success: boolean; audit: WebsiteAudit }> {
+  return request('/api/audits/run', {
+    method: 'POST', body: JSON.stringify({ consent_id: consentId, idempotency_key: crypto.randomUUID() }),
+  })
+}
+
+export function getWebsiteAuditResult(auditId: string): Promise<{ audit: WebsiteAudit }> {
+  return request(`/api/audits/${auditId}`)
 }
 
 // --- Utilidad: parsear errores de la API ---

@@ -20,6 +20,7 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
 # Origen publico del frontend, sin slash final (por ejemplo, https://app.vercel.app).
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+AUDIT_CONSENT_VERSION = os.getenv("AUDIT_CONSENT_VERSION", "2026-09-04")
 
 # Solo para PRUEBAS: DeepSeek es compatible con el SDK de OpenAI (base_url distinto).
 # Si DEEPSEEK_API_KEY esta seteada, el pipeline la usa primero. No cambia el plan real.

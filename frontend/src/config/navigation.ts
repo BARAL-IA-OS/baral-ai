@@ -1,9 +1,13 @@
 import {
   BarChart3,
+  BookOpen,
   Boxes,
+  Camera,
   FolderOpen,
+  Globe2,
   History,
   LayoutDashboard,
+  Megaphone,
   PackageSearch,
   Sparkles,
   Users,
@@ -26,7 +30,8 @@ export const navigationGroups: NavigationGroup[] = [
     label: 'Trabajo',
     items: [
       { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-      { to: '/studio', label: 'Estudio', Icon: Sparkles },
+      { to: '/campaigns', label: 'Campañas', Icon: Megaphone },
+      { to: '/studio', label: 'Estudio rápido', Icon: Sparkles },
       { to: '/history', label: 'Historial', Icon: History },
     ],
   },
@@ -36,6 +41,14 @@ export const navigationGroups: NavigationGroup[] = [
       { to: '/adn', label: 'Resumen', Icon: Boxes, end: true },
       { to: '/adn/catalogo', label: 'Catálogo', Icon: PackageSearch },
       { to: '/adn/recursos', label: 'Recursos', Icon: FolderOpen },
+    ],
+  },
+  {
+    label: 'Creación',
+    items: [
+      { to: '/photoshoot', label: 'Photoshoot', Icon: Camera },
+      { to: '/brand-book', label: 'Brand Book', Icon: BookOpen },
+      { to: '/audit', label: 'Auditoría web', Icon: Globe2 },
     ],
   },
   {

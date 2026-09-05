@@ -6,12 +6,14 @@ import config
 from routers import (
     analytics,
     assets,
+    audits,
     auth,
     brand,
     business_dna,
     catalog,
     clients,
     content,
+    creative,
     health,
     onboarding,
     recipes,
@@ -55,3 +57,5 @@ app.include_router(tasks.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(strategies.router, prefix="/api")
 app.include_router(clients.router, prefix="/api")
+app.include_router(creative.router, prefix="/api")
+app.include_router(audits.router, prefix="/api")

@@ -19,16 +19,16 @@ const CHANNELS: { id: ChannelType; label: string; Icon: React.ElementType }[] = 
 ]
 
 const SAMPLE: MockContent = {
-  brandName: 'Studio Foto',
-  handle: 'studiofoto',
-  initials: 'SF',
+  brandName: 'Tu marca',
+  handle: 'tumarca',
+  initials: 'TM',
   recipient: 'María García',
-  subject: 'María, te extrañamos en Studio Foto',
+  subject: 'Una novedad pensada para ti',
   caption:
-    'Ya está abierta la agenda de sesiones de primavera. Luz natural, exteriores y entrega en 48h para que tu familia tenga recuerdos que duran.',
-  hashtags: ['#FotografíaFamiliar', '#Medellín', '#SesiónDeFotos'],
-  cta: 'Reservar mi sesión',
-  mediaAlt: 'Familia en sesión al aire libre, tonos cálidos de atardecer',
+    'Aquí aparecerá el contenido generado a partir del ADN confirmado de tu negocio.',
+  hashtags: ['#TuMarca', '#Novedad'],
+  cta: 'Conocer más',
+  mediaAlt: 'Recurso visual alineado con la identidad del negocio',
 }
 
 interface SocialPreviewProps {
