@@ -52,6 +52,7 @@ export interface Client {
   ultima_compra?: string
   producto?: string
   created_at?: string
+  no_contactar?: boolean
 }
 
 export interface TaskDraftContent {
@@ -200,5 +201,94 @@ export interface SavedStrategy {
   params: Record<string, unknown>
   times_used: number
   last_used_at?: string
+  created_at: string
+}
+
+// --- Suite creativa de OMAR ---
+
+export interface CampaignBrief {
+  objective: string
+  product: string
+  audience: string
+  offer_cta: string
+  tone: string
+  channels: ChannelType[]
+  format: string
+  resources: string[]
+  restrictions: string
+}
+
+export interface CreativeCampaign {
+  id: string
+  name: string
+  prompt: string
+  brief: CampaignBrief
+  status: 'BRIEF' | 'PROCESSING' | 'READY' | 'FAILED'
+  content_by_channel: Partial<Record<ChannelType, ContentItem>>
+  versions: Array<Record<string, unknown>>
+  aspect_ratio: string
+  channels: ChannelType[]
+  selected_assets: string[]
+  tokens_used: number
+  cost_usd: number
+  provider?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface GeneratedAsset {
+  id: string
+  kind: string
+  name?: string
+  url: string | null
+  storage_path?: string | null
+  image_b64?: string | null
+  prompt: string
+  status: 'GENERATED' | 'SAVED' | 'FAILED'
+  cost_usd: number
+  tokens_used: number
+  provider?: string
+}
+
+export interface BrandBook {
+  id: string
+  title: string
+  cover_url?: string | null
+  selected_assets: string[]
+  content: Record<string, string>
+  version: number
+  status: string
+}
+
+export interface AuditFinding {
+  id?: string
+  title: string
+  priority: 'P0' | 'P1' | 'P2' | 'P3'
+  category?: string
+  what?: string
+  impactBusiness?: string
+  direction?: string
+  effort?: string
+}
+
+export interface AuditResult {
+  domain: string
+  url: string
+  scanDate?: string
+  scores: Record<string, number>
+  findings: AuditFinding[]
+  tech?: Array<Record<string, unknown>>
+  agentReadiness?: Record<string, unknown>
+  coverage?: Record<string, unknown>
+}
+
+export interface WebsiteAudit {
+  id: string
+  url: string
+  domain: string
+  status: 'PROCESSING' | 'COMPLETED' | 'FAILED'
+  progress: number
+  result?: AuditResult
+  error?: string
   created_at: string
 }

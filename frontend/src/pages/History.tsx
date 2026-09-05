@@ -12,21 +12,12 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react'
-import { getTasks, parseApiError } from '../lib/api'
-import { supabase } from '../lib/supabase'
-import type { Task, TaskStatus } from '../types'
+import { getCampaigns, getTasks, parseApiError } from '../lib/api'
+import type { CreativeCampaign, Task, TaskStatus } from '../types'
 import { Spinner } from '../components/ui/Spinner'
 import { TaskStatusBadge } from '../components/history/TaskStatusBadge'
 
 type HistoryFilter = 'all' | 'tasks' | 'studio' | 'pending' | 'completed'
-
-interface StudioCampaignRow {
-  id: string
-  name: string
-  prompt: string
-  created_at: string
-  content_by_channel?: Record<string, unknown> | null
-}
 
 interface HistoryAction {
   id: string
@@ -46,7 +37,7 @@ interface HistoryAction {
 const FILTERS: Array<{ id: HistoryFilter; label: string }> = [
   { id: 'all', label: 'Todo' },
   { id: 'tasks', label: 'Recetas' },
-  { id: 'studio', label: 'Estudio' },
+  { id: 'studio', label: 'Campañas' },
   { id: 'pending', label: 'Pendientes' },
   { id: 'completed', label: 'Completadas' },
 ]
@@ -105,17 +96,17 @@ function taskToAction(task: Task): HistoryAction {
   }
 }
 
-function studioToAction(row: StudioCampaignRow): HistoryAction {
+function studioToAction(row: CreativeCampaign): HistoryAction {
   return {
     id: row.id,
     kind: 'studio',
     title: row.name,
     description: row.prompt,
     createdAt: row.created_at,
-    costUsd: 0,
-    statusLabel: 'Generada en Estudio',
+    costUsd: Number(row.cost_usd || 0),
+    statusLabel: row.status === 'READY' ? 'Lista' : row.status === 'BRIEF' ? 'Brief' : row.status,
     channels: Object.keys(row.content_by_channel ?? {}).length,
-    href: '/studio',
+    href: `/studio/${row.id}`,
   }
 }
 
@@ -133,30 +124,13 @@ export function History() {
       setError(null)
 
       try {
-        const tasks = await getTasks(50)
-        const { data: userData } = await supabase.auth.getUser()
-        const userId = userData.user?.id
-        let studioRows: StudioCampaignRow[] = []
-
-        if (userId) {
-          const { data, error: studioError } = await supabase
-            .from('studio_campaigns')
-            .select('id,name,prompt,created_at,content_by_channel')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-
-          if (studioError) {
-            throw new Error('No se pudo leer el historial de Estudio.')
-          }
-
-          studioRows = (data ?? []) as StudioCampaignRow[]
-        }
+        const [tasks, campaignResponse] = await Promise.all([getTasks(50), getCampaigns()])
 
         if (cancelled) return
 
         const nextActions = [
           ...tasks.map(taskToAction),
-          ...studioRows.map(studioToAction),
+          ...campaignResponse.campaigns.map(studioToAction),
         ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
         setActions(nextActions)
@@ -174,8 +148,8 @@ export function History() {
   }, [])
 
   const summary = useMemo(() => {
-    const completed = actions.filter((action) => action.taskStatus === 'COMPLETED').length
-    const pending = actions.filter((action) => action.taskStatus === 'PENDING_APPROVAL').length
+    const completed = actions.filter((action) => action.taskStatus === 'COMPLETED' || action.statusLabel === 'Lista').length
+    const pending = actions.filter((action) => action.taskStatus === 'PENDING_APPROVAL' || action.statusLabel === 'Brief').length
     const studio = actions.filter((action) => action.kind === 'studio').length
     const cost = actions.reduce((sum, action) => sum + action.costUsd, 0)
     return { completed, pending, studio, cost }
@@ -184,8 +158,8 @@ export function History() {
   const filteredActions = actions.filter((action) => {
     if (filter === 'tasks') return action.kind === 'task'
     if (filter === 'studio') return action.kind === 'studio'
-    if (filter === 'pending') return action.taskStatus === 'PENDING_APPROVAL'
-    if (filter === 'completed') return action.taskStatus === 'COMPLETED'
+    if (filter === 'pending') return action.taskStatus === 'PENDING_APPROVAL' || action.statusLabel === 'Brief'
+    if (filter === 'completed') return action.taskStatus === 'COMPLETED' || action.statusLabel === 'Lista'
     return true
   })
 
@@ -226,7 +200,7 @@ export function History() {
         </article>
         <article>
           <span><Sparkles size={18} /></span>
-          <small>Estudio</small>
+          <small>Campañas</small>
           <strong>{summary.studio}</strong>
         </article>
         <article>
@@ -257,7 +231,7 @@ export function History() {
             <Inbox size={24} strokeWidth={1.5} />
           </span>
           <strong>No hay acciones para este filtro</strong>
-          <p>Genera una campaña desde Estudio o ejecuta una receta para alimentar el historial.</p>
+          <p>Genera una campaña o ejecuta una receta para alimentar el historial.</p>
           <Link to="/dashboard">Ir al Dashboard</Link>
         </div>
       ) : (

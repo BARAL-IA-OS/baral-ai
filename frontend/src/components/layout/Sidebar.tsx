@@ -3,13 +3,19 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   BarChart3,
   Bell,
+  BookOpen,
+  Boxes,
+  Camera,
+  Dna,
+  FolderOpen,
+  Globe2,
   History,
   LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
+  Megaphone,
   Sparkles,
-  Tag,
   Users,
 } from 'lucide-react'
 import baralLogoDark from '../../assets/login/logo baral dark.png'
@@ -21,14 +27,25 @@ const STORAGE_KEY = 'baral-sidebar-collapsed'
 
 const strategyItems = [
   { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-  { to: '/studio', label: 'Estudio', Icon: Sparkles },
+  { to: '/campaigns', label: 'Campañas', Icon: Megaphone },
   { to: '/history', label: 'Historial', Icon: History },
+] as const
+
+const dnaItems = [
+  { to: '/onboarding?force=true', label: 'Resumen', Icon: Dna },
+  { to: '', label: 'Catálogo', Icon: Boxes, disabled: true },
+  { to: '', label: 'Recursos', Icon: FolderOpen, disabled: true },
+] as const
+
+const creationItems = [
+  { to: '/photoshoot', label: 'Photoshoot', Icon: Camera },
+  { to: '/brand-book', label: 'Brand Book', Icon: BookOpen },
+  { to: '/audit', label: 'Auditoría web', Icon: Globe2 },
 ] as const
 
 const insightItems = [
   { to: '/clients', label: 'Clientes', Icon: Users },
-  { to: '/analytics', label: 'Reportes y Analitica', Icon: BarChart3 },
-  { to: '/onboarding?force=true', label: 'Marca', Icon: Tag },
+  { to: '/analytics', label: 'Analítica', Icon: BarChart3 },
 ] as const
 
 export function Sidebar() {
@@ -79,8 +96,12 @@ export function Sidebar() {
       label: string
       Icon: React.ElementType
       meta?: string
+      disabled?: boolean
     },
   ) {
+    if (item.disabled) {
+      return <button key={item.label} type="button" className="sidebar-disabled-item" title="Se habilitará con el módulo ADN de Jhamil" disabled><item.Icon size={16} /><span className="sidebar-label">{item.label}</span><small>Próx.</small></button>
+    }
     return (
       <NavLink key={`${item.to}-${item.label}`} to={item.to} title={collapsed ? item.label : undefined}>
         <item.Icon size={16} strokeWidth={1.85} />
@@ -129,6 +150,16 @@ export function Sidebar() {
             </button>
           </div>
           {strategyItems.map(renderItem)}
+        </div>
+
+        <div className="sidebar-section">
+          <span className="sidebar-section-title">ADN del negocio</span>
+          {dnaItems.map(renderItem)}
+        </div>
+
+        <div className="sidebar-section">
+          <span className="sidebar-section-title">Creación</span>
+          {creationItems.map(renderItem)}
         </div>
 
         <div className="sidebar-section">

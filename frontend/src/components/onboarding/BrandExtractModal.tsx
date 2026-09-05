@@ -153,7 +153,7 @@ export function BrandExtractModal({ onApply, onClose }: BrandExtractModalProps) 
                 type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej. Studio Foto"
+                placeholder="Ej. Mi empresa"
               />
             </label>
             {FIELD_LABELS.map(({ key, label }) => (

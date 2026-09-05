@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom'
 import './App.css'
 import './styles/baral-eclipse.css'
+import './styles/omar-suite.css'
 import { Layout } from './components/layout/Layout'
 import { Spinner } from './components/ui/Spinner'
 import { useAuth } from './hooks/useAuth'
@@ -23,6 +24,10 @@ import { Preview } from './pages/Preview'
 import { Profile } from './pages/Profile'
 import { Recipe } from './pages/Recipe'
 import { Studio } from './pages/Studio'
+import { Campaigns } from './pages/Campaigns'
+import { Photoshoot } from './pages/Photoshoot'
+import { BrandBook } from './pages/BrandBook'
+import { WebsiteAudit } from './pages/WebsiteAudit'
 import { Welcome } from './pages/Welcome'
 
 function ProtectedRoutes() {
@@ -128,7 +133,13 @@ function App() {
           <Route path="/onboarding" element={<Onboarding />} />
           <Route element={<BrandBrainRequired />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/studio" element={<Studio />} />
+            <Route path="/campaigns" element={<Campaigns />} />
+            <Route path="/studio" element={<Navigate to="/campaigns" replace />} />
+            <Route path="/studio/:campaignId" element={<Studio />} />
+            <Route path="/photoshoot" element={<Photoshoot />} />
+            <Route path="/brand-book" element={<BrandBook />} />
+            <Route path="/audit" element={<WebsiteAudit />} />
+            <Route path="/website-audit" element={<Navigate to="/audit" replace />} />
             <Route path="/recipe/:type" element={<Recipe />} />
             <Route path="/preview/:taskId" element={<Preview />} />
             <Route path="/history" element={<History />} />
