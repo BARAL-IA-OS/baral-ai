@@ -12,6 +12,8 @@ services:
         value: 3.14.3
       - key: FRONTEND_URL
         sync: false
+      - key: AUDIT_CONSENT_VERSION
+        value: "2026-09-04"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY

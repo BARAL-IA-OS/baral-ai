@@ -3,7 +3,7 @@
 
 - Bajo demanda (una imagen por llamada) para cuidar el saldo.
 - Costo REAL calculado desde `usage` (tokens) de la respuesta.
-- La imagen se guarda en Supabase Storage (bucket publico) y se devuelve su URL.
+- La imagen se guarda en Supabase Storage privado y se devuelve una URL firmada.
 - Sin OPENAI_API_KEY devuelve None (el frontend muestra el placeholder).
 """
 import base64
@@ -25,23 +25,24 @@ _BUCKET = "content-images"
 @dataclass
 class ImageResult:
     b64: str | None          # PNG en base64 (fallback si no hay storage)
-    image_url: str | None    # URL publica en Supabase Storage
+    image_url: str | None    # URL firmada temporal en Supabase Storage
     cost_usd: float
     tokens: int
     provider: str
+    storage_path: str | None = None
     error: str | None = None
 
 
 def _ensure_bucket(sb) -> None:
-    """Crea el bucket publico si no existe (idempotente)."""
+    """Crea el bucket privado si no existe (idempotente)."""
     try:
-        sb.storage.create_bucket(_BUCKET, options={"public": True})
+        sb.storage.create_bucket(_BUCKET, options={"public": False})
     except Exception:
         pass  # ya existe u otro error no fatal
 
 
-def _save_to_storage(b64: str, user_id: str | None) -> str | None:
-    """Sube el PNG a Supabase Storage y devuelve la URL publica."""
+def _save_to_storage(b64: str, user_id: str | None) -> tuple[str | None, str | None]:
+    """Sube el PNG y devuelve URL firmada temporal + ruta privada."""
     try:
         sb = get_supabase()
         _ensure_bucket(sb)
@@ -50,9 +51,11 @@ def _save_to_storage(b64: str, user_id: str | None) -> str | None:
         sb.storage.from_(_BUCKET).upload(
             path, data, {"content-type": "image/png", "upsert": "true"}
         )
-        return sb.storage.from_(_BUCKET).get_public_url(path)
+        signed = sb.storage.from_(_BUCKET).create_signed_url(path, 3600)
+        url = signed.get("signedURL") or signed.get("signedUrl")
+        return url, path
     except Exception:
-        return None
+        return None, None
 
 
 def _cost_from_usage(usage) -> float:
@@ -83,7 +86,7 @@ def generate_image(prompt: str, user_id: str | None = None) -> ImageResult:
         tokens = int(getattr(usage, "total_tokens", 0) or 0) if usage else 0
         cost = _cost_from_usage(usage) if usage else _IMG_COST_FALLBACK.get(config.OPENAI_IMAGE_QUALITY, 0.011)
 
-        image_url = _save_to_storage(b64, user_id)
+        image_url, storage_path = _save_to_storage(b64, user_id)
 
         return ImageResult(
             b64=None if image_url else b64,  # si se guardo, no arrastramos el base64
@@ -91,6 +94,7 @@ def generate_image(prompt: str, user_id: str | None = None) -> ImageResult:
             cost_usd=cost,
             tokens=tokens,
             provider=f"openai:{config.OPENAI_IMAGE_MODEL}",
+            storage_path=storage_path,
         )
     except Exception as exc:
         return ImageResult(None, None, 0.0, 0, "openai", error=str(exc))

@@ -291,18 +291,18 @@ Reutilizar la lógica útil de `baral-audit`:
 
 No duplicar el motor completo dentro del frontend de Baral AI.
 
-Crear una capa adaptadora:
+Integrar el motor en una capa interna del backend:
 
 ```text
 Baral AI frontend
     → FastAPI autenticado
-    → adaptador/proxy de auditoría
-    → motor Baral Audit
+    → servicio interno de auditoría
+    → lógica portada de Baral Audit
     → resultado normalizado
     → dashboard Baral AI
 ```
 
-Esto evita CORS, centraliza autenticación y permite registrar costos, consentimiento e historial. Si inicialmente Baral Audit permanece como servicio separado, el backend de Baral AI debe comunicarse con él; no usar un `iframe` como solución final.
+Esto evita CORS y un segundo despliegue, centraliza autenticación y permite registrar costos, consentimiento e historial. Baral AI no depende de una API externa de Baral Audit y no usa un `iframe`.
 
 Entidades recomendadas:
 
@@ -426,7 +426,7 @@ No copiar el verde amarillento de las referencias. El fondo debe permanecer en e
 ### Entrega 5 — Auditoría
 
 - autorización;
-- adaptador con Baral Audit;
+- motor interno basado en Baral Audit;
 - progreso;
 - dashboard;
 - historial y exportación.
