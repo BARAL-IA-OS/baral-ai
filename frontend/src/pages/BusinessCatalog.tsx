@@ -140,41 +140,39 @@ export function BusinessCatalog() {
   }
 
   return (
-    <section className="page catalog-page">
-      <div className="feature-page-header">
-        <div><span className="page-eyebrow"><PackageOpen size={15} /> ADN del negocio</span><h1>Catálogo</h1><p>Productos y servicios disponibles para campañas y piezas creativas.</p></div>
-        <div className="header-actions"><button type="button" className="button button-secondary" onClick={() => setShowUrlImport(true)}><Globe2 size={17} /> Agregar desde URL</button><button type="button" className="button button-primary" onClick={openNew}><Plus size={17} /> Agregar elemento</button></div>
-      </div>
+    <section className="page catalog-page catalog-gallery-page">
+      <header className="dna-gallery-heading">
+        <h1>ADN del negocio · Catálogo</h1><p>Tus productos y servicios, listos para protagonizar tu próxima campaña.<br />Agrega, organiza y actualiza tu oferta cuando quieras.</p>
+      </header>
       <div className="catalog-toolbar">
-        <label className="search-control"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar en el catálogo…" /></label>
+        <label className="search-control"><Search size={17} /><input aria-label="Buscar en el catálogo" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar en el catálogo…" /></label>
         <div className="filter-pills">
           {(['all', 'product', 'service', 'archived'] as const).map((value) => (
-            <button type="button" key={value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>
+            <button type="button" key={value} aria-pressed={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>
               {value === 'all' ? 'Todos' : value === 'product' ? 'Productos' : value === 'service' ? 'Servicios' : 'Archivados'}
             </button>
           ))}
         </div>
       </div>
       {error && <div className="error-banner"><CircleAlert size={17} />{error}</div>}
-      {loading ? <Spinner label="Cargando catálogo…" /> : visibleItems.length === 0 ? (
-        <div className="empty-state"><PackageOpen size={28} /><strong>Aún no hay elementos aquí</strong><p>Agrega tu primer producto o servicio para usarlo en campañas.</p><button type="button" className="button button-secondary" onClick={openNew}>Agregar desde cero</button></div>
-      ) : (
+      {loading ? <Spinner label="Cargando catálogo…" /> : (
         <div className="catalog-grid">
+          <button type="button" className="catalog-add-tile" onClick={() => setShowUrlImport(true)}><Globe2 size={29} strokeWidth={1.6} /><strong>Agregar desde URL</strong><span>Importa la oferta de tu web</span></button>
+          <button type="button" className="catalog-add-tile" onClick={openNew}><Plus size={32} strokeWidth={1.6} /><strong>Agregar desde cero</strong><span>Crea un producto o servicio</span></button>
           {visibleItems.map((item) => {
             const itemAssets = assets.filter((asset) => asset.catalog_item_id === item.id && asset.status === 'active')
             return <article className={`catalog-card ${item.status === 'archived' ? 'is-archived' : ''}`} key={item.id}>
-              {itemAssets[0]?.signed_url && <div className="catalog-card-image"><img src={itemAssets[0].signed_url} alt={item.name} />{itemAssets.length > 1 && <span>+{itemAssets.length - 1}</span>}</div>}
-              <div className="catalog-card-top"><span className="badge badge-neutral">{item.kind === 'product' ? 'Producto' : 'Servicio'}</span>{item.featured && <span className="badge badge-featured"><Sparkles size={12} /> Destacado</span>}</div>
-              <div><h2>{item.name}</h2><span>{item.category || 'Sin categoría'}</span><p>{item.description || 'Sin descripción.'}</p></div>
-              <div className="catalog-price">{item.price != null ? `${item.currency} ${item.price.toFixed(2)}` : 'Precio a consultar'}</div>
+              <button type="button" className="catalog-card-image" onClick={() => openEdit(item)} aria-label={`Ver y editar ${item.name}`}>{itemAssets[0]?.signed_url ? <img src={itemAssets[0].signed_url} alt={item.name} loading="lazy" /> : <PackageOpen size={42} strokeWidth={1.5} />}{itemAssets.length > 1 && <span>+{itemAssets.length - 1}</span>}{item.featured && <small className="catalog-featured"><Sparkles size={12} /> Destacado</small>}</button>
+              <div className="catalog-gallery-caption"><h2><button type="button" onClick={() => openEdit(item)}>{item.name}</button></h2><span>{item.kind === 'product' ? 'Producto' : 'Servicio'}{item.category ? ` · ${item.category}` : ''}</span>{item.price != null && <small>{item.currency} {item.price.toFixed(2)}</small>}</div>
               <footer>
                 <button type="button" onClick={() => void changeItem(item, { featured: !item.featured })}><Sparkles size={16} />{item.featured ? 'Quitar destacado' : 'Destacar'}</button>
                 <button type="button" onClick={() => openEdit(item)} aria-label={`Editar ${item.name}`}><Pencil size={16} /></button>
-                <button type="button" onClick={() => void changeItem(item, { status: item.status === 'active' ? 'archived' : 'active' })} aria-label="Archivar"><Archive size={16} /></button>
+                <button type="button" onClick={() => void changeItem(item, { status: item.status === 'active' ? 'archived' : 'active' })} aria-label={item.status === 'active' ? `Archivar ${item.name}` : `Restaurar ${item.name}`} title={item.status === 'active' ? 'Archivar' : 'Restaurar'}><Archive size={16} /></button>
                 <button type="button" className="danger-action" onClick={() => void remove(item)} aria-label="Eliminar"><Trash2 size={16} /></button>
               </footer>
             </article>
           })}
+          {visibleItems.length === 0 && <div className="catalog-empty-tile"><PackageOpen size={30} /><strong>{search || filter !== 'all' ? 'Sin resultados' : 'Tu catálogo empieza aquí'}</strong><p>{search || filter !== 'all' ? 'Prueba otra búsqueda o cambia el filtro.' : 'Agrega tu primer producto o servicio con una de estas opciones.'}</p></div>}
         </div>
       )}
       <Drawer open={editing !== null} title={editing === 'new' ? 'Nuevo producto o servicio' : 'Editar elemento'} onClose={() => setEditing(null)}>

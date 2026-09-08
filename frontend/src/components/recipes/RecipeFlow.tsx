@@ -42,7 +42,7 @@ export function RecipeFlow({ type }: RecipeFlowProps) {
     <section className="recipe-page">
       {/* Compact inline header */}
       <div className="recipe-topbar">
-        <Link to="/dashboard" className="recipe-back">
+        <Link to="/campaigns" className="recipe-back">
           <ArrowLeft size={16} />
           Dashboard
         </Link>

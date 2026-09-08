@@ -14,7 +14,7 @@ export function Recipe() {
   const { type } = useParams()
 
   if (!validRecipes.includes(type as RecipeType)) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/campaigns" replace />
   }
 
   return (

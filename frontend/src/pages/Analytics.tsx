@@ -35,7 +35,7 @@ export function Analytics() {
           </span>
           <strong>Aún no hay datos</strong>
           <p>Las métricas se calcularán automáticamente cuando ejecutes tu primera campaña.</p>
-          <Link to="/dashboard">Ir al Dashboard →</Link>
+          <Link to="/campaigns">Crear una campaña →</Link>
         </div>
       )}
 

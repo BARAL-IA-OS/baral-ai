@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
@@ -55,6 +55,28 @@ def _campaign(user_id: str, campaign_id: str) -> dict[str, Any]:
     if not result.data:
         raise HTTPException(status_code=404, detail="Campana no encontrada")
     return result.data[0]
+
+
+def _resource_ids(user_id: str, resource_ids: list[str]) -> list[str]:
+    """Validate owned images and retain IDs, not expiring signed URLs."""
+    ids = list(dict.fromkeys(resource_ids))
+    if not ids:
+        return []
+    if len(ids) > 12:
+        raise HTTPException(status_code=400, detail="Selecciona hasta 12 imagenes por campana")
+    try:
+        for asset_id in ids:
+            UUID(asset_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Vuelve a seleccionar las imagenes desde Recursos") from exc
+    rows = (
+        get_supabase().table("brand_assets").select("id,mime_type")
+        .eq("user_id", user_id).eq("status", "active").in_("id", ids).execute()
+    )
+    owned = {row["id"] for row in rows.data or [] if row.get("mime_type", "").startswith("image/")}
+    if any(asset_id not in owned for asset_id in ids):
+        raise HTTPException(status_code=400, detail="Una imagen ya no esta disponible en tus recursos")
+    return ids
 
 
 class CampaignBrief(BaseModel):
@@ -129,7 +151,7 @@ async def create_campaign_brief(
         tone=brand.get("tono", "Claro y cercano"),
         channels=valid_channels,
         format=f"Piezas {request.aspect_ratio} adaptadas por canal",
-        resources=request.resources,
+        resources=_resource_ids(user.id, request.resources),
         restrictions=brand.get("prohibiciones", ""),
     ).model_dump()
     campaign_id = str(uuid4())
@@ -144,7 +166,7 @@ async def create_campaign_brief(
         "versions": [],
         "aspect_ratio": request.aspect_ratio,
         "channels": valid_channels,
-        "selected_assets": request.resources,
+        "selected_assets": brief["resources"],
         "idempotency_key": request.idempotency_key,
         "cost_usd": 0,
         "tokens_used": 0,
@@ -166,9 +188,11 @@ async def update_campaign_brief(
     user: CurrentUser = Depends(get_current_user),
 ):
     _campaign(user.id, campaign_id)
+    brief = request.brief.model_dump()
+    brief["resources"] = _resource_ids(user.id, brief["resources"])
     result = (
         get_supabase().table("creative_campaigns")
-        .update({"brief": request.brief.model_dump(), "updated_at": _now()})
+        .update({"brief": brief, "selected_assets": brief["resources"], "updated_at": _now()})
         .eq("id", campaign_id).eq("user_id", user.id).execute()
     )
     return {"success": True, "campaign": result.data[0]}
@@ -207,7 +231,10 @@ async def generate_campaign_content(
         return {"success": True, "campaign": campaign}
     brand = _brand_for(user.id)
     brief = request.brief.model_dump() if request.brief else campaign.get("brief", {})
+    brief["resources"] = _resource_ids(user.id, brief.get("resources", []))
     channels = [channel for channel in brief.get("channels", campaign.get("channels", [])) if channel in CHANNELS]
+    if not channels:
+        raise HTTPException(status_code=400, detail="Selecciona al menos un canal valido")
     prompt = "\n".join(
         f"{label}: {brief.get(key, '')}" for label, key in (
             ("Objetivo", "objective"), ("Producto", "product"),
@@ -222,6 +249,8 @@ async def generate_campaign_content(
     update = {
         "brief": brief,
         "status": "READY",
+        "selected_assets": brief["resources"],
+        "channels": channels,
         "content_by_channel": by_channel,
         "versions": versions[-20:],
         "tokens_used": (campaign.get("tokens_used") or 0) + result["tokens_used"],

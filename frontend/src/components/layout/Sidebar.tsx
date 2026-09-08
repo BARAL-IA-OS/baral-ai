@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bell, Menu, PanelLeftClose, PanelLeftOpen, Settings, X } from 'lucide-react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { ChevronUp, Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
+import { NavLink, useLocation } from 'react-router-dom'
 import baralLogoDark from '../../assets/login/logo baral dark.png'
 import { navigationGroups } from '../../config/navigation'
 import { getOnboardingProgress } from '../../features/business-dna/api'
@@ -11,14 +11,14 @@ const STORAGE_KEY = 'baral-sidebar-collapsed'
 
 export function Sidebar() {
   const { user } = useAuth()
-  const navigate = useNavigate()
+  const { pathname } = useLocation()
   const email = user?.email ?? 'Sin sesión'
   const initials = email.slice(0, 2).toUpperCase()
   const displayName = email.split('@')[0] || 'Usuario'
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(STORAGE_KEY) === 'true')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [progress, setProgress] = useState(0)
+  const [progress, setProgress] = useState<number | null>(null)
   const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -26,15 +26,28 @@ export function Sidebar() {
   }, [collapsed])
 
   useEffect(() => {
-    getOnboardingProgress()
-      .then((status) => setProgress(status.completionPercentage))
-      .catch(() => setProgress(0))
-  }, [])
+    let active = true
+    const refresh = () => { void getOnboardingProgress()
+      .then((status) => { if (active) setProgress(Math.min(100, Math.max(0, status.completionPercentage))) })
+      .catch(() => { if (active) setProgress(null) }) }
+    refresh()
+    window.addEventListener('baral:dna-updated', refresh)
+    return () => { active = false; window.removeEventListener('baral:dna-updated', refresh) }
+  }, [pathname])
 
   const toggleCollapse = useCallback(() => {
     setCollapsed((current) => !current)
     setDropdownOpen(false)
   }, [])
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    function onKey(event: KeyboardEvent) { if (event.key === 'Escape') setMobileOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', onKey) }
+  }, [mobileOpen])
 
   return (
     <>
@@ -78,18 +91,13 @@ export function Sidebar() {
           </button>
         </div>
 
-        <button type="button" className="sidebar-progress-card" onClick={() => navigate('/adn')}>
-          <span className="sidebar-progress-ring" style={{ '--progress': `${progress * 3.6}deg` } as React.CSSProperties}>
-            <small>{progress}</small>
-          </span>
-          <span>ADN del negocio</span>
-          <strong>{progress}%</strong>
-        </button>
-
         <nav className="sidebar-nav" aria-label="Navegación principal">
           {navigationGroups.map((group) => (
             <div className="sidebar-section" key={group.label}>
-              <span className="sidebar-section-title">{group.label}</span>
+              <span className="sidebar-section-title">
+                <span>{group.label}</span>
+                {group.label === 'ADN del negocio' && <span className="sidebar-dna-percentage" title={progress === null ? 'Porcentaje no disponible' : 'ADN completado'} aria-label={progress === null ? 'Porcentaje no disponible' : `ADN completado al ${progress}%`}>{progress === null ? '—' : `${progress}%`}</span>}
+              </span>
               {group.items.map((item) => (
                 <NavLink
                   key={item.to}
@@ -100,21 +108,12 @@ export function Sidebar() {
                 >
                   <item.Icon size={18} strokeWidth={1.75} />
                   <span className="sidebar-label">{item.label}</span>
-                  <span className="sidebar-tooltip">{item.label}</span>
+                  <span className="sidebar-tooltip" aria-hidden="true">{item.label}</span>
                 </NavLink>
               ))}
             </div>
           ))}
         </nav>
-
-        <div className="sidebar-footer-actions">
-          <button type="button" aria-label="Configuración" onClick={() => navigate('/profile')}>
-            <Settings size={18} strokeWidth={1.75} />
-          </button>
-          <button type="button" aria-label="Notificaciones" className="sidebar-bell">
-            <Bell size={18} strokeWidth={1.75} />
-          </button>
-        </div>
 
         <div className="sidebar-profile-container" ref={profileRef}>
           <button
@@ -122,9 +121,11 @@ export function Sidebar() {
             className="sidebar-profile"
             onClick={() => setDropdownOpen((current) => !current)}
             aria-expanded={dropdownOpen}
+            aria-label="Abrir menú de cuenta"
           >
             <span className="sidebar-avatar">{initials}</span>
-            <span className="sidebar-profile-copy"><strong>{displayName}</strong><small>Administrador</small></span>
+            <span className="sidebar-profile-copy"><strong>{displayName}</strong><small>Mi cuenta</small></span>
+            <ChevronUp className="account-chevron" size={16} />
           </button>
           {dropdownOpen && (
             <AccountDropdown

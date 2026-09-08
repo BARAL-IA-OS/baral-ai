@@ -3866,32 +3866,6 @@ textarea {
     padding: 14px;
   }
 
-  .app-shell { grid-template-columns: 1fr; }
-  .app-shell:has(.sidebar-collapsed) { grid-template-columns: 1fr; }
-
-  .sidebar {
-    position: relative;
-    height: auto;
-    width: 100% !important;
-    min-height: 60px;
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-  }
-
-  .sidebar nav { flex-direction: row; gap: 4px; overflow-x: auto; }
-  .sidebar-divider, .sidebar-stars, .sidebar-top { display: none; }
-
-  .sidebar-brand {
-    flex: 0 0 auto;
-    height: 40px;
-    margin-bottom: 0;
-  }
-
-  .sidebar-brand img { width: 100px; }
-  .sidebar-profile-container { display: none; }
-
   .onboarding-layout { grid-template-columns: 1fr; }
   .onboarding-aside { position: static; grid-template-columns: minmax(0, 1fr) minmax(240px, 0.6fr); align-items: start; }
 
@@ -3969,8 +3943,6 @@ textarea {
     width: 100%;
   }
 
-  .sidebar a { font-size: 0; gap: 0; padding: 0 10px; width: 38px; justify-content: center; }
-  .sidebar-label { display: none; }
 
   .page { padding: 18px 14px; }
 
@@ -4570,78 +4542,6 @@ textarea {
 }
 
 @media (max-width: 900px) {
-  .app-shell,
-  .app-shell:has(.sidebar-collapsed) {
-    grid-template-columns: 76px minmax(0, 1fr);
-  }
-
-  .sidebar,
-  .sidebar.sidebar-collapsed {
-    position: sticky;
-    top: 0;
-    width: 76px !important;
-    height: 100vh;
-    min-height: 100vh;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
-    padding: 18px 8px 0;
-    border-right: 1px solid #202020;
-  }
-
-  .sidebar-top {
-    display: grid;
-    justify-items: center;
-    padding: 0;
-  }
-
-  .sidebar-brand {
-    display: flex;
-    width: auto;
-    height: 44px;
-    justify-content: center;
-  }
-
-  .sidebar-brand strong,
-  .sidebar-progress-card span,
-  .sidebar-progress-card strong,
-  .sidebar-section-title,
-  .sidebar-section-head,
-  .sidebar-label,
-  .sidebar-item-meta,
-  .sidebar-profile-copy {
-    display: none;
-  }
-
-  .sidebar-progress-card {
-    width: 46px;
-    min-height: 46px;
-    justify-content: center;
-    padding: 0;
-  }
-
-  .sidebar-nav,
-  .sidebar nav {
-    display: grid;
-    flex-direction: column;
-    gap: 14px;
-    overflow: visible;
-  }
-
-  .sidebar a {
-    width: 46px;
-    min-height: 46px;
-    justify-content: center;
-    padding: 0;
-    margin: 0 auto;
-    font-size: 0.92rem;
-  }
-
-  .sidebar-profile-container {
-    display: block;
-    margin: 0 -8px;
-    padding: 10px;
-  }
 
   .dashboard-hero,
   .dashboard-bottom-grid {

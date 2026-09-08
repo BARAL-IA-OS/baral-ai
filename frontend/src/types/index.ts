@@ -35,6 +35,7 @@ export type TaskStatus =
 
 export interface BrandBrain {
   id: string
+  business_name?: string
   industria: string
   propuesta: string
   tono: string

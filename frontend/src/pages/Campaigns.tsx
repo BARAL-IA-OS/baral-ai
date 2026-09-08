@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Image, Megaphone, Mic, Package, Paperclip, Sparkles, Users } from 'lucide-react'
-import { createCampaignBrief, generateCampaignContent, getClients, parseApiError } from '../lib/api'
+import { ArrowUpRight, Check, ChevronDown, Image, LoaderCircle, Mic, Package, Plus, SlidersHorizontal, Sparkles, X } from 'lucide-react'
+import { createCampaignBrief, generateCampaignContent, parseApiError } from '../lib/api'
 import { getBrandBrain } from '../hooks/useBrandBrain'
-import type { BrandBrain, CampaignBrief, ChannelType, Client, CreativeCampaign } from '../types'
+import { getCatalogItems, getBrandAssets, uploadBrandAssets } from '../features/business-dna/api'
+import type { BrandAsset, CatalogItem } from '../features/business-dna/types'
+import type { BrandBrain, CampaignBrief, ChannelType, CreativeCampaign } from '../types'
 
 const CHANNELS: Array<{ value: ChannelType; label: string }> = [
   { value: 'instagram', label: 'Instagram' },
@@ -28,6 +30,7 @@ type SpeechRecognitionLike = {
   interimResults: boolean
   continuous: boolean
   start: () => void
+  stop: () => void
   onresult: ((event: { results: ArrayLike<{ 0: { transcript: string } }> }) => void) | null
   onend: (() => void) | null
   onerror: (() => void) | null
@@ -36,7 +39,14 @@ type SpeechRecognitionLike = {
 export function Campaigns() {
   const navigate = useNavigate()
   const [brand, setBrand] = useState<BrandBrain | null>(null)
-  const [clients, setClients] = useState<Client[]>([])
+  const [catalog, setCatalog] = useState<CatalogItem[]>([])
+  const [assets, setAssets] = useState<BrandAsset[]>([])
+  const [showResources, setShowResources] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [contextError, setContextError] = useState('')
+  const [contextLoading, setContextLoading] = useState(true)
+  const promptRef = useRef<HTMLTextAreaElement>(null)
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
   const [prompt, setPrompt] = useState('')
   const [product, setProduct] = useState('')
   const [audience, setAudience] = useState('Audiencia definida en el ADN del negocio')
@@ -48,41 +58,60 @@ export function Campaigns() {
   const [loading, setLoading] = useState(false)
   const [listening, setListening] = useState(false)
   const [error, setError] = useState('')
+  const dialogOpen = Boolean(brief) || showResources
 
   useEffect(() => {
-    void Promise.all([getBrandBrain(), getClients().catch(() => ({ clients: [] }))]).then(([brandData, clientData]) => {
-      setBrand(brandData)
-      setClients(clientData.clients)
-      if (brandData?.audiencia) setAudience(brandData.audiencia)
-    })
-  }, [])
+    if (!dialogOpen) return
+    const previous = document.activeElement as HTMLElement | null
+    const dialog = document.querySelector<HTMLElement>('.campaigns-page [role="dialog"]')
+    const focusable = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea, select, [tabindex="0"]') || [])
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    focusable()[0]?.focus()
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !loading) { setBrief(null); setShowResources(false) }
+      if (event.key !== 'Tab') return
+      const elements = focusable()
+      const first = elements[0], last = elements.at(-1)
+      if (event.shiftKey && (document.activeElement === first || !dialog?.contains(document.activeElement))) {
+        event.preventDefault(); last?.focus()
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog?.contains(document.activeElement))) {
+        event.preventDefault(); first?.focus()
+      }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => { document.removeEventListener('keydown', handleKey); document.body.style.overflow = overflow; previous?.focus() }
+  }, [dialogOpen, loading])
 
-  const contactableClients = useMemo(
-    () => clients.filter((client) => (
-      !client.no_contactar &&
-      client.lifecycle_status !== 'do_not_contact' &&
-      client.contact_consent !== false
-    )),
-    [clients],
-  )
-  const products = useMemo(
-    () => Array.from(new Set(contactableClients.map((client) => client.producto).filter(Boolean))) as string[],
-    [contactableClients],
-  )
-  const segments = useMemo(() => [
-    { value: brand?.audiencia || 'Audiencia definida en el ADN', label: 'Audiencia del ADN' },
-    { value: 'Clientes activos', label: `Clientes activos (${contactableClients.filter((client) => client.ultima_compra).length})` },
-    { value: 'Clientes inactivos', label: `Clientes inactivos (${contactableClients.filter((client) => !client.ultima_compra).length})` },
-    { value: 'Nuevos prospectos', label: `Nuevos prospectos (${contactableClients.length})` },
-  ], [brand, contactableClients])
+  useEffect(() => {
+    let active = true
+    void Promise.allSettled([getBrandBrain(), getCatalogItems('active'), getBrandAssets()]).then(([dna, products, media]) => {
+      if (!active) return
+      if (dna.status === 'fulfilled') {
+        setBrand(dna.value)
+        if (dna.value?.audiencia) setAudience(dna.value.audiencia)
+      }
+      if (products.status === 'fulfilled') setCatalog(products.value.items)
+      if (media.status === 'fulfilled') setAssets(media.value.assets.filter((asset) => asset.status === 'active'))
+      if ([dna, products, media].some((result) => result.status === 'rejected')) setContextError('No pudimos cargar todo el contexto del negocio. Recarga la página para volver a intentarlo.')
+      setContextLoading(false)
+    })
+    return () => { active = false; recognitionRef.current?.stop() }
+  }, [])
 
   const suggestions = useMemo(() => {
     const offer = brand?.propuesta || 'tu producto o servicio principal'
     const target = brand?.audiencia || 'tu audiencia ideal'
     return [
-      `Presenta ${offer} a ${target} con una propuesta clara y cercana.`,
-      `Crea una campaña de confianza que destaque ${brand?.diferenciador || 'el diferencial del negocio'}.`,
-      `Reactiva clientes con una oferta relevante y un llamado a la acción directo.`,
+      { title: 'Presenta tu próximo favorito', label: 'Lanzamiento', headline: 'Algo nuevo. Muy tuyo.', style: 'launch',
+        description: 'Dale a tu producto una entrada que se recuerde.',
+        prompt: `Presenta ${offer} a ${target} con una propuesta clara y cercana.` },
+      { title: 'Haz que conozcan tu esencia', label: 'Tu marca', headline: 'Lo que te hace único.', style: 'brand',
+        description: 'Cuenta tu historia y conecta con las personas correctas.',
+        prompt: `Crea una campaña de confianza que destaque ${brand?.diferenciador || 'el diferencial del negocio'}.` },
+      { title: 'Vuelve a conectar', label: 'Reactivación', headline: 'Mucho más por compartir.', style: 'connect',
+        description: 'Una buena razón para que tus clientes vuelvan.',
+        prompt: 'Reactiva clientes con una oferta relevante y un llamado a la acción directo.' },
     ]
   }, [brand])
 
@@ -101,7 +130,9 @@ export function Campaigns() {
       setError('El dictado por voz no está disponible en este navegador.')
       return
     }
+    if (listening) { recognitionRef.current?.stop(); return }
     const recognition = new ctor()
+    recognitionRef.current = recognition
     recognition.lang = 'es-BO'
     recognition.interimResults = false
     recognition.continuous = false
@@ -115,11 +146,37 @@ export function Campaigns() {
       setError('No se pudo capturar el audio.')
     }
     setListening(true)
-    recognition.start()
+    try { recognition.start() } catch { setListening(false); setError('No se pudo iniciar el micrófono. Puedes escribir tu idea.') }
+  }
+
+  async function uploadResources(files: File[]) {
+    if (!files.length || uploading) return
+    if (resources.length + files.length > 12) {
+      setError('Puedes seleccionar hasta 12 imágenes por campaña.')
+      return
+    }
+    if (files.some((file) => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024)) {
+      setError('Usa imágenes JPG, PNG o WebP de hasta 10 MB.')
+      return
+    }
+    setUploading(true); setError('')
+    try {
+      const result = await uploadBrandAssets(files, 'reference')
+      setAssets((current) => [...result.assets, ...current])
+      setResources((current) => [...new Set([...current, ...result.assets.map((asset) => asset.id)])])
+    } catch (reason) { setError(parseApiError(reason)) }
+    finally { setUploading(false) }
+  }
+
+  function chooseSuggestion(value: string) {
+    setPrompt(value)
+    promptRef.current?.focus()
+    promptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   async function generateBrief() {
-    if (!prompt.trim() || channels.length === 0 || loading) return
+    if (!prompt.trim() || channels.length === 0 || loading || uploading || contextLoading) return
+    if (resources.length > 12) { setError('Selecciona hasta 12 imágenes por campaña.'); return }
     setLoading(true)
     setError('')
     try {
@@ -166,80 +223,72 @@ export function Campaigns() {
 
   return (
     <section className="page omar-page campaigns-page">
-      <header className="omar-page-header">
-        <span className="omar-eyebrow"><Megaphone size={14} /> Centro creativo</span>
-        <h1>Campañas</h1>
-        <p>Cuéntale a Baral qué quieres lograr. El contexto de tu negocio completa el resto.</p>
+      <header className="campaign-welcome">
+        <span className="campaign-kicker"><span /> TU PRÓXIMA GRAN IDEA EMPIEZA AQUÍ</span>
+        <h1>Hagamos crecer <em>tu negocio.</em></h1>
+        <p>Una idea. Tu marca. Una campaña lista para tomar forma.</p>
       </header>
-
-      <div className="campaign-composer omar-panel">
+      <div className="campaign-composer omar-panel" aria-busy={loading || uploading}>
         <div className="campaign-prompt-row">
-          <textarea
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            placeholder="Describe la campaña que quieres crear…"
-            aria-label="Descripción de la campaña"
-          />
-          <button type="button" className={`icon-button ${listening ? 'is-live' : ''}`} onClick={dictate} aria-label="Dictar campaña">
-            <Mic size={19} />
-          </button>
+          <textarea ref={promptRef} value={prompt} onChange={(event) => setPrompt(event.target.value)}
+            placeholder="¿Qué quieres promocionar hoy? Cuéntanos tu idea…"
+            aria-label="Describe la campaña que quieres crear" maxLength={5000}
+            onKeyDown={(event) => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); void generateBrief() } }} />
+          <button type="button" className={`icon-button ${listening ? 'is-live' : ''}`} onClick={dictate}
+            aria-label={listening ? 'Detener dictado' : 'Dictar campaña'} aria-pressed={listening}><Mic size={19} /></button>
         </div>
         <div className="campaign-controls">
-          <label><Package size={15} />
-            <select value={product} onChange={(event) => setProduct(event.target.value)}>
-              <option value="">Producto del ADN</option>
-              {products.map((item) => <option key={item}>{item}</option>)}
-            </select>
-          </label>
-          <label><Users size={15} />
-            <select value={audience} onChange={(event) => setAudience(event.target.value)}>
-              {segments.map((segment) => <option key={segment.value} value={segment.value}>{segment.label}</option>)}
-            </select>
-          </label>
-          <label className="campaign-resource-picker"><Paperclip size={15} />
-            <span>{resources.length ? `${resources.length} recurso(s)` : 'Recursos'}</span>
-            <input type="file" accept="image/*" multiple onChange={(event) => setResources(Array.from(event.target.files || []).map((file) => file.name))} />
-          </label>
-          <label><Image size={15} />
-            <select value={aspectRatio} onChange={(event) => setAspectRatio(event.target.value)}>
-              <option>1:1</option><option>4:5</option><option>9:16</option><option>16:9</option>
-            </select>
-          </label>
-          <button type="button" className="button button-primary campaign-generate" disabled={!prompt.trim() || channels.length === 0 || loading} onClick={() => void generateBrief()}>
-            <Sparkles size={16} /> {loading ? 'Preparando…' : 'Generar brief'}
+          <label><Package size={16} /><select aria-label="Producto del catálogo" value={product} disabled={contextLoading} onChange={(event) => setProduct(event.target.value)}>
+            <option value="">{contextLoading ? 'Cargando…' : 'Producto'}</option>
+            {catalog.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}
+          </select><ChevronDown size={12} /></label>
+          <button type="button" className="composer-pill" onClick={() => setShowResources(true)}><Image size={16} /> Imágenes {resources.length > 0 && <span>{resources.length}</span>}</button>
+          <label><SlidersHorizontal size={15} /><select aria-label="Formato de campaña" value={aspectRatio} onChange={(event) => setAspectRatio(event.target.value)}>
+            <option value="1:1">Cuadrado</option><option value="4:5">Vertical</option><option value="9:16">Historia</option><option value="16:9">Horizontal</option>
+          </select><ChevronDown size={12} /></label>
+          <button type="button" className="button button-primary campaign-generate" disabled={!prompt.trim() || !channels.length || loading || uploading || contextLoading} onClick={() => void generateBrief()}>
+            {loading ? <LoaderCircle className="is-spinning" size={16} /> : <Sparkles size={16} />}{loading ? 'Preparando tu idea…' : 'Crear campaña'}
           </button>
         </div>
-        <div className="channel-picker" aria-label="Canales de campaña">
-          {CHANNELS.map((channel) => (
-            <button key={channel.value} type="button" className={channels.includes(channel.value) ? 'is-selected' : ''} onClick={() => toggleChannel(channel.value)}>
-              {channel.label}
-            </button>
-          ))}
-        </div>
+        <details className="campaign-options">
+          <summary>Canales y audiencia <span>{channels.map((channel) => CHANNELS.find((item) => item.value === channel)?.label).join(' · ')}</span><ChevronDown size={13} /></summary>
+          <div className="channel-picker" aria-label="Canales de campaña">{CHANNELS.map((channel) => <button key={channel.value} type="button" aria-pressed={channels.includes(channel.value)} className={channels.includes(channel.value) ? 'is-selected' : ''} onClick={() => toggleChannel(channel.value)}>{channel.label}</button>)}</div>
+          <label className="campaign-audience">¿A quién quieres llegar?<input value={audience} onChange={(event) => setAudience(event.target.value)} /></label>
+          {!channels.length && <p role="status">Selecciona al menos un canal para continuar.</p>}
+        </details>
       </div>
-
-      {error && <p className="omar-alert error">{error}</p>}
-
-      <section className="omar-section">
-        <div className="omar-section-title">
-          <div><span>Sugerencias desde tu ADN</span><h2>Empieza con una dirección</h2></div>
-        </div>
-        <div className="suggestion-grid">
-          {suggestions.map((suggestion, index) => (
-            <button key={suggestion} type="button" className="suggestion-card omar-card" onClick={() => setPrompt(suggestion)}>
-              <span>0{index + 1}</span><p>{suggestion}</p><small>Usar esta idea →</small>
-            </button>
-          ))}
-        </div>
+      <p className="composer-caption"><Check size={13} /> Primero revisas la propuesta. Después generas el contenido.</p>
+      {contextError && <p className="omar-alert error" role="status">{contextError}</p>}
+      {error && !brief && !showResources && <p className="omar-alert error" role="alert">{error}</p>}
+      <section className="campaign-inspiration" aria-labelledby="inspiration-title">
+        <div className="inspiration-heading"><div><h2 id="inspiration-title">Un poco de inspiración</h2><p>{brand ? 'Ideas con la esencia de tu negocio. Hazlas tuyas.' : 'Elige una idea y dale tu propio toque.'}</p></div><span>ELIGE · PERSONALIZA · CREA</span></div>
+        <div className="suggestion-grid">{suggestions.map((suggestion, index) => (
+          <button key={suggestion.style} type="button" className="creative-suggestion" onClick={() => chooseSuggestion(suggestion.prompt)}>
+            <div className={`suggestion-art art-${suggestion.style}`} aria-hidden="true"><span className="art-edition">BARAL STUDIO / 0{index + 1}</span><div className="art-orbit" /><div className="art-shape" /><strong>{suggestion.headline}</strong><small>Una idea para tu marca</small><span className="art-format">{index === 1 ? 'HISTORIA DE MARCA' : 'CAMPAÑA SOCIAL'}</span></div>
+            <div className="suggestion-copy"><span>{suggestion.label}</span><h3>{suggestion.title}</h3><p>{suggestion.description}</p><span className="suggestion-action">Usar esta idea <ArrowUpRight size={17} /></span></div>
+          </button>
+        ))}</div>
       </section>
-
+      <footer className="creative-tools"><span>Tu marca también puede…</span><button onClick={() => navigate('/photoshoot')}>Crear imágenes <ArrowUpRight size={14} /></button><button onClick={() => navigate('/brand-book')}>Diseñar un Brand Book <ArrowUpRight size={14} /></button><button onClick={() => navigate('/audit')}>Auditar su sitio web <ArrowUpRight size={14} /></button></footer>
+      {showResources && <div className="omar-modal-backdrop"><section className="omar-modal resource-modal" role="dialog" aria-modal="true" aria-labelledby="resource-title">
+        <div className="omar-modal-head"><div><span>Recursos de tu negocio</span><h2 id="resource-title">Elige tus imágenes</h2></div><button type="button" className="icon-button" aria-label="Cerrar selector de imágenes" onClick={() => setShowResources(false)}><X size={20} /></button></div>
+        <p className="resource-help">Las imágenes seleccionadas acompañarán el contenido en el Estudio.</p>
+        <label className="resource-upload"><Plus size={18} /> {uploading ? 'Subiendo imágenes…' : 'Subir imágenes'}<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploading} onChange={(event) => { void uploadResources(Array.from(event.target.files || [])); event.target.value = '' }} /></label>
+        {error && <p className="omar-alert error" role="alert">{error}</p>}
+        <div className="resource-library">{assets.filter((asset) => asset.mime_type.startsWith('image/')).map((asset) => <button type="button" key={asset.id} aria-pressed={resources.includes(asset.id)} className={resources.includes(asset.id) ? 'is-selected' : ''} onClick={() => setResources((current) => current.includes(asset.id) ? current.filter((id) => id !== asset.id) : [...current, asset.id])}>
+          {asset.signed_url && <img src={asset.signed_url} alt={asset.title || asset.original_filename} loading="lazy" />}<span>{asset.title || asset.original_filename}</span>{resources.includes(asset.id) && <Check size={17} />}
+        </button>)}</div>
+        {!assets.length && <p className="resource-help">Aún no tienes imágenes. Sube una foto de tu producto o continúa con texto.</p>}
+        <div className="omar-modal-actions"><button type="button" className="button button-primary" disabled={uploading} onClick={() => setShowResources(false)}>Usar selección{resources.length ? ` (${resources.length})` : ''}</button></div>
+      </section></div>}
       {brief && (
         <div className="omar-modal-backdrop" role="presentation">
           <section className="omar-modal brief-modal" role="dialog" aria-modal="true" aria-labelledby="brief-title">
             <div className="omar-modal-head">
               <div><span>Brief editable</span><h2 id="brief-title">Confirma la dirección creativa</h2></div>
-              <button type="button" className="icon-button" onClick={() => setBrief(null)}>×</button>
+              <button type="button" className="icon-button" onClick={() => setBrief(null)} disabled={loading} aria-label="Cerrar propuesta"><X size={20} /></button>
             </div>
+            {error && <p className="omar-alert error" role="alert">{error}</p>}
             <div className="brief-grid">
               {briefFields.map((field) => (
                 <label key={field.key} className={field.multiline ? 'span-2' : ''}>
@@ -253,9 +302,9 @@ export function Campaigns() {
               ))}
             </div>
             <div className="brief-array-field"><span>Canales</span><div className="channel-picker">{CHANNELS.map((channel) => <button key={channel.value} type="button" className={brief.channels.includes(channel.value) ? 'is-selected' : ''} onClick={() => toggleBriefChannel(channel.value)}>{channel.label}</button>)}</div></div>
-            <div className="brief-array-field"><span>Recursos seleccionados</span><div className="resource-chips">{brief.resources.length ? brief.resources.map((resource) => <button type="button" key={resource} onClick={() => setBrief((current) => current ? { ...current, resources: current.resources.filter((item) => item !== resource) } : current)}>{resource} ×</button>) : <small>Sin recursos; puedes continuar solo con texto.</small>}</div></div>
+            <div className="brief-array-field"><span>Recursos seleccionados</span><div className="resource-chips">{brief.resources.length ? brief.resources.map((resource) => <button type="button" key={resource} onClick={() => setBrief((current) => current ? { ...current, resources: current.resources.filter((item) => item !== resource) } : current)}>{assets.find((asset) => asset.id === resource)?.title || assets.find((asset) => asset.id === resource)?.original_filename || resource} ×</button>) : <small>Sin recursos; puedes continuar solo con texto.</small>}</div></div>
             <div className="omar-modal-actions">
-              <button type="button" className="button button-secondary" onClick={() => setBrief(null)}>Seguir editando después</button>
+              <button type="button" className="button button-secondary" onClick={() => setBrief(null)} disabled={loading}>Volver a mi idea</button>
               <button type="button" className="button button-primary" onClick={() => void confirmBrief()} disabled={loading}>
                 <Sparkles size={16} /> {loading ? 'Generando contenido…' : 'Confirmar y abrir Estudio'}
               </button>

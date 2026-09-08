@@ -29,8 +29,8 @@ export function Onboarding() {
   }, [])
 
   if (loading) return <Spinner label="Preparando Primeros pasos…" />
-  if (mode === 'manual') return <main className="first-steps-page"><ManualBusinessWizard initialSections={progress?.businessDNA?.sections || emptySections} initialStep={progress?.currentStep || 1} catalogItems={catalog} onComplete={() => navigate('/dashboard', { replace: true })} onBackToChoice={() => setMode(null)} /></main>
-  if (mode === 'url') return <main className="first-steps-page"><WebsiteOnboarding initialJobId={progress?.activeExtractionJobId} onComplete={() => navigate('/dashboard', { replace: true })} onBack={() => setMode(null)} /></main>
+  if (mode === 'manual') return <main className="first-steps-page"><ManualBusinessWizard initialSections={progress?.businessDNA?.sections || emptySections} initialStep={progress?.currentStep || 1} catalogItems={catalog} onComplete={() => navigate('/campaigns', { replace: true })} onBackToChoice={() => setMode(null)} /></main>
+  if (mode === 'url') return <main className="first-steps-page"><WebsiteOnboarding initialJobId={progress?.activeExtractionJobId} onComplete={() => navigate('/campaigns', { replace: true })} onBack={() => setMode(null)} /></main>
 
   return (
     <main className="first-steps-page onboarding-choice-page">

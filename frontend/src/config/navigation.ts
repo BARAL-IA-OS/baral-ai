@@ -1,15 +1,12 @@
 import {
-  BarChart3,
   BookOpen,
   Boxes,
   Camera,
   FolderOpen,
   Globe2,
   History,
-  LayoutDashboard,
   Megaphone,
   PackageSearch,
-  Sparkles,
   Users,
 } from 'lucide-react'
 
@@ -27,20 +24,10 @@ export interface NavigationGroup {
 
 export const navigationGroups: NavigationGroup[] = [
   {
-    label: 'Trabajo',
+    label: 'Tu espacio creativo',
     items: [
-      { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
       { to: '/campaigns', label: 'Campañas', Icon: Megaphone },
-      { to: '/studio', label: 'Estudio rápido', Icon: Sparkles },
       { to: '/history', label: 'Historial', Icon: History },
-    ],
-  },
-  {
-    label: 'ADN del negocio',
-    items: [
-      { to: '/adn', label: 'Resumen', Icon: Boxes, end: true },
-      { to: '/adn/catalogo', label: 'Catálogo', Icon: PackageSearch },
-      { to: '/adn/recursos', label: 'Recursos', Icon: FolderOpen },
     ],
   },
   {
@@ -52,10 +39,17 @@ export const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
+    label: 'ADN del negocio',
+    items: [
+      { to: '/adn', label: 'Resumen', Icon: Boxes, end: true },
+      { to: '/adn/catalogo', label: 'Catálogo', Icon: PackageSearch },
+      { to: '/adn/recursos', label: 'Recursos', Icon: FolderOpen },
+    ],
+  },
+  {
     label: 'Gestión',
     items: [
       { to: '/clients', label: 'Clientes 360', Icon: Users },
-      { to: '/analytics', label: 'Reportes y Analítica', Icon: BarChart3 },
     ],
   },
 ]

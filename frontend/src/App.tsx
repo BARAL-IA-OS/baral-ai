@@ -17,6 +17,8 @@ import './styles/features/onboarding.css'
 import './styles/features/clients.css'
 import './styles/features/dashboard.css'
 import './styles/omar-suite.css'
+import './styles/creative-workspace.css'
+import './styles/dna-gallery.css'
 import { Layout } from './components/layout/Layout'
 import { Spinner } from './components/ui/Spinner'
 import { getOnboardingProgress } from './features/business-dna/api'
@@ -30,7 +32,6 @@ const BusinessCatalog = lazy(() => import('./pages/BusinessCatalog').then((modul
 const BusinessDNA = lazy(() => import('./pages/BusinessDNA').then((module) => ({ default: module.BusinessDNA })))
 const Campaigns = lazy(() => import('./pages/Campaigns').then((module) => ({ default: module.Campaigns })))
 const Clients = lazy(() => import('./pages/Clients').then((module) => ({ default: module.Clients })))
-const Dashboard = lazy(() => import('./pages/Dashboard').then((module) => ({ default: module.Dashboard })))
 const History = lazy(() => import('./pages/History').then((module) => ({ default: module.History })))
 const Onboarding = lazy(() => import('./pages/Onboarding').then((module) => ({ default: module.Onboarding })))
 const Photoshoot = lazy(() => import('./pages/Photoshoot').then((module) => ({ default: module.Photoshoot })))
@@ -52,15 +53,17 @@ function AuthenticatedRoutes() {
 function OnboardingRequired() {
   const [loading, setLoading] = useState(true)
   const [completed, setCompleted] = useState(false)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     getOnboardingProgress()
       .then((progress) => setCompleted(progress.completed))
-      .catch(() => setCompleted(false))
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [])
 
   if (loading) return <Spinner />
+  if (error) return <ConnectionRetry />
   if (!completed) return <Navigate to="/primeros-pasos" replace />
   return <Outlet />
 }
@@ -72,17 +75,23 @@ function AppLayout() {
 function HomeRedirect() {
   const { user, loading } = useAuth()
   const [nextPath, setNextPath] = useState<string | null>(null)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     if (loading || !user) return
     getOnboardingProgress()
-      .then((progress) => setNextPath(progress.completed ? '/dashboard' : '/primeros-pasos'))
-      .catch(() => setNextPath('/primeros-pasos'))
+      .then((progress) => setNextPath(progress.completed ? '/campaigns' : '/primeros-pasos'))
+      .catch(() => setError(true))
   }, [loading, user])
 
   if (!loading && !user) return <Navigate to="/login" replace />
+  if (error) return <ConnectionRetry />
   if (!nextPath) return <Spinner />
   return <Navigate to={nextPath} replace />
+}
+
+function ConnectionRetry() {
+  return <main className="connection-retry"><h1>Estamos conectando con tu negocio</h1><p>No pudimos cargar tu espacio. Tu información sigue guardada.</p><button className="button button-primary" onClick={() => window.location.reload()}>Volver a intentar</button></main>
 }
 
 function App() {
@@ -98,7 +107,7 @@ function App() {
           <Route path="/onboarding" element={<Navigate to="/primeros-pasos" replace />} />
           <Route element={<OnboardingRequired />}>
             <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Navigate to="/campaigns" replace />} />
               <Route path="/adn" element={<BusinessDNA />} />
               <Route path="/adn/catalogo" element={<BusinessCatalog />} />
               <Route path="/adn/recursos" element={<BusinessAssets />} />

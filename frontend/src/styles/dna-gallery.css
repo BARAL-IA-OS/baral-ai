@@ -1,0 +1,110 @@
+/* Business DNA: an editable brand board and a visual product library. */
+.dna-gallery-page, .catalog-gallery-page {
+  max-width: 1140px;
+  padding: 56px clamp(20px, 4vw, 52px) 40px;
+}
+.dna-gallery-heading { text-align: center; margin-bottom: 40px; }
+.dna-gallery-heading h1 {
+  font: italic 400 clamp(28px, 3vw, 39px)/1.2 Georgia, 'Times New Roman', serif;
+  letter-spacing: -1px; color: var(--text); margin: 0 0 12px;
+}
+.dna-gallery-heading p { max-width: 660px; margin: 0 auto; color: var(--text-muted); font-size: 13px; line-height: 1.7; }
+.dna-gallery-shell { background: var(--surface-muted); border-radius: 26px; }
+.dna-gallery-shell .feature-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; width: 100%; padding: 0; margin: 0; background: var(--bg); border: 0; border-radius: 26px 26px 0 0; overflow: hidden; }
+.dna-gallery-shell .feature-tabs button { border: 0; background: var(--surface-muted); color: var(--text-muted); min-height: 54px; padding: 14px 12px; font-size: 14px; font-weight: 500; border-radius: 26px 26px 0 0; box-shadow: none; }
+.dna-gallery-shell .feature-tabs button:not(.is-active) { background: var(--bg); }
+.dna-gallery-shell .feature-tabs button.is-active { color: var(--text); background: var(--surface-muted); }
+.dna-gallery-grid { padding: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.dna-gallery-grid .dna-section-card { padding: 22px; border: 1px solid transparent; border-radius: 17px; background: var(--surface-elevated); min-width: 0; }
+.dna-gallery-grid .dna-section-card.is-editing { border-color: var(--primary); }
+.dna-gallery-grid .dna-section-card > header { gap: 12px; margin-bottom: 14px; }
+.dna-gallery-grid .dna-section-card h2 { font-size: 14px; font-weight: 500; margin: 0; }
+.dna-gallery-grid .dna-section-card header p { font-size: 11px; line-height: 1.6; margin-top: 7px; }
+.dna-gallery-grid .dna-section-card header p:empty { display: none; }
+.dna-gallery-grid .dna-source { font-size: 10px; }
+.dna-gallery-grid .icon-text-button { flex-shrink: 0; width: 33px; height: 33px; min-height: 33px; padding: 0; display: grid; place-items: center; border-radius: 50%; background: var(--primary-bg); color: var(--primary); }
+.dna-gallery-grid .dna-edit-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.dna-gallery-grid .dna-fields-grid { grid-template-columns: 1fr; gap: 12px; }
+.dna-gallery-grid .dna-value > span { font-size: 10px; letter-spacing: .03em; font-weight: 500; }
+.dna-gallery-grid .dna-value > strong { font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.dna-gallery-grid .dna-value > strong.is-empty { color: var(--text-muted); }
+.dna-gallery-grid .dna-value input, .dna-gallery-grid .dna-value textarea { font-size: 13px; }
+.dna-gallery-grid .dna-identity-card, .dna-gallery-grid .dna-colors-card { grid-column: 1 / -1; }
+.dna-gallery-grid .dna-identity-card > header { margin-bottom: 0; }
+.dna-brand-preview { padding: 6px 10px 10px; }
+.dna-gallery-grid .dna-brand-preview h2 { font-size: clamp(25px, 3vw, 36px); line-height: 1.2; letter-spacing: -.9px; margin-bottom: 14px; }
+.dna-brand-preview a { display: flex; width: fit-content; align-items: center; gap: 9px; color: var(--text-secondary); text-decoration: none; font-size: 13px; overflow-wrap: anywhere; }
+.dna-brand-preview a svg { flex-shrink: 0; }
+.dna-brand-preview small { display: block; color: var(--text-muted); font-size: 11px; margin-top: 15px; }
+.dna-brand-preview p, .dna-brand-preview > span { color: var(--text-muted); font-size: 12px; line-height: 1.7; margin-top: 8px; }
+.dna-logo-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; align-self: stretch; gap: 15px; min-height: 200px; padding: 24px; color: var(--primary); text-decoration: none; background: var(--primary-bg); border: 8px solid var(--surface-elevated); border-radius: 17px; }
+.dna-logo-tile img { width: 100%; height: 116px; object-fit: contain; }
+.dna-logo-tile span { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; }
+.dna-font-card { align-self: stretch; }
+.dna-font-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 8px 0 12px; text-align: center; }
+.dna-font-preview > span { color: var(--primary); font-size: 54px; line-height: 1; letter-spacing: -3px; }
+.dna-font-preview strong { font-size: 12px; font-weight: 400; }
+.dna-swatches { display: flex; flex-wrap: wrap; gap: 24px; padding: 8px 8px 12px; }
+.dna-swatches > div { display: grid; justify-items: center; gap: 12px; }
+.dna-swatches > div > span { display: block; width: 62px; height: 62px; border-radius: 50%; border: 1px solid var(--border); box-shadow: inset 0 1px 3px #ffffff30; }
+.dna-swatches small { font-size: 10px; color: var(--text-muted); }
+.dna-swatches p, .dna-social-links p { color: var(--text-muted); font-size: 12px; line-height: 1.7; }
+.dna-social-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.dna-social-links a { display: inline-flex; align-items: center; gap: 6px; color: var(--text); background: var(--surface-muted); padding: 8px 10px; border-radius: 8px; text-decoration: none; font-size: 12px; }
+.dna-gallery-details > .dna-section-card:nth-last-child(-n+2),
+.dna-gallery-brand > .dna-section-card:last-child { grid-column: 1 / -1; }
+.dna-gallery-details .dna-fields-grid,
+.dna-gallery-brand > .dna-section-card:last-child .dna-fields-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dna-gallery-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.dna-gallery-actions .button { border-radius: 99px; min-height: 39px; font-size: 12px; }
+.catalog-gallery-page .catalog-toolbar { grid-template-columns: minmax(150px, 1fr) auto; align-items: center; margin-bottom: 18px; }
+.catalog-gallery-page .search-control { min-height: 38px; border-radius: 10px; }
+.catalog-gallery-page .search-control input { font-size: 12px; min-width: 0; }
+.catalog-gallery-page .filter-pills { gap: 4px; }
+.catalog-gallery-page .filter-pills button { font-size: 11px; padding: 8px 10px; min-height: 36px; }
+.catalog-gallery-page .catalog-grid { gap: 14px; align-items: start; }
+.catalog-add-tile, .catalog-empty-tile { aspect-ratio: 1 / 1.15; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 22px; text-align: center; border-radius: 15px; border: 1px solid transparent; background: var(--primary-bg); color: var(--primary); }
+.catalog-add-tile { background: color-mix(in srgb, var(--primary) 16%, var(--surface)); cursor: pointer; transition: border-color 160ms ease, background 160ms ease; }
+.catalog-add-tile:hover { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 23%, var(--surface)); }
+.catalog-add-tile strong { color: inherit; font-size: 13px; font-weight: 500; }
+.catalog-add-tile span { color: var(--text-muted); font-size: 11px; }
+.catalog-empty-tile { background: var(--surface-muted); color: var(--text-muted); }
+.catalog-empty-tile strong { color: var(--text); font-size: 13px; font-weight: 500; }
+.catalog-empty-tile p { font-size: 12px; line-height: 1.6; margin: 0; }
+.catalog-gallery-page .catalog-card { overflow: hidden; padding: 0; min-height: 0; border: 1px solid var(--border); border-radius: 15px; box-shadow: none; }
+.catalog-gallery-page .catalog-card:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }
+.catalog-gallery-page .catalog-card-image { width: 100%; height: auto; aspect-ratio: 1 / .83; display: grid; place-items: center; border: 0; border-radius: 0; margin: 0; padding: 0; cursor: pointer; background: var(--surface); color: var(--text-muted); }
+.catalog-gallery-page .catalog-card-image img { position: absolute; inset: 0; }
+.catalog-featured { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; padding: 5px 7px; font-size: 9px; background: var(--surface-muted); color: var(--primary); border-radius: 6px; }
+.catalog-gallery-caption { padding: 13px 14px; background: var(--surface-elevated); }
+.catalog-gallery-caption h2 { margin: 0 0 6px; }
+.catalog-gallery-caption h2 button { display: block; width: 100%; border: 0; padding: 0; background: none; color: var(--text); font-size: 13px; font-weight: 500; line-height: 1.45; text-align: left; overflow-wrap: anywhere; }
+.catalog-gallery-caption > span, .catalog-gallery-caption > small { font-size: 10px; color: var(--text-muted); }
+.catalog-gallery-caption > small { display: block; margin-top: 5px; }
+.catalog-gallery-page .catalog-card footer { margin: 0; padding: 5px 8px; border-top: 0; background: var(--surface-elevated); }
+.catalog-gallery-page .catalog-card footer button { font-size: 10px; padding: 0 6px; }
+@media (max-width: 1050px) {
+  .catalog-gallery-page .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .catalog-gallery-page .catalog-toolbar { grid-template-columns: 1fr; }
+}
+@media (max-width: 767px) {
+  .dna-gallery-page, .catalog-gallery-page { padding: 28px 16px 32px; }
+  .dna-gallery-heading { margin-bottom: 28px; }
+  .dna-gallery-heading h1 { font-size: 28px; }
+  .dna-gallery-heading p { font-size: 12px; }
+  .dna-gallery-grid { padding: 12px; grid-template-columns: 1fr; }
+  .dna-gallery-grid .dna-section-card { padding: 18px; }
+  .dna-gallery-details .dna-fields-grid,
+  .dna-gallery-brand > .dna-section-card:last-child .dna-fields-grid { grid-template-columns: 1fr; }
+  .dna-gallery-shell .feature-tabs button { font-size: 12px; padding-inline: 8px; }
+  .dna-gallery-grid .dna-brand-preview h2 { font-size: 28px; }
+  .dna-swatches { gap: 16px; padding-inline: 0; }
+  .dna-swatches > div > span { width: 52px; height: 52px; }
+  .dna-gallery-actions { justify-content: center; }
+  .catalog-gallery-page .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .catalog-add-tile, .catalog-empty-tile { min-height: 180px; aspect-ratio: auto; padding: 16px 10px; }
+  .catalog-add-tile span { display: none; }
+  .catalog-gallery-page .catalog-card footer { flex-wrap: wrap; }
+  .catalog-gallery-page .catalog-card footer button { min-height: 38px; }
+  .catalog-gallery-page .catalog-card footer button:first-child { width: 100%; }
+}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Bell,
+  BarChart3,
   Settings,
   LogOut,
   Sun,
@@ -55,16 +55,15 @@ export function AccountDropdown({ email, initials, onClose, anchorRef }: Account
         <span className="account-dd-avatar">{initials}</span>
         <div className="account-dd-info">
           <strong>{email}</strong>
-          <small>Prototipo local</small>
+          <small>Tu espacio de trabajo</small>
         </div>
       </div>
 
       <div className="account-dd-divider" />
 
-      <button type="button" className="account-dd-item">
-        <Bell size={16} strokeWidth={1.75} />
-        <span>Notificaciones</span>
-        <i className="account-dd-dot" />
+      <button type="button" className="account-dd-item" onClick={() => { navigate('/analytics'); onClose() }}>
+        <BarChart3 size={16} strokeWidth={1.75} />
+        <span>Métricas y actividad</span>
       </button>
 
       <button

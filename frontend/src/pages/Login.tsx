@@ -16,7 +16,7 @@ export function Login() {
   const [loading, setLoading] = useState(false)
 
   if (user) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/campaigns" replace />
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

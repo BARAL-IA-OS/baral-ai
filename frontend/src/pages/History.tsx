@@ -232,7 +232,7 @@ export function History() {
           </span>
           <strong>No hay acciones para este filtro</strong>
           <p>Genera una campaña o ejecuta una receta para alimentar el historial.</p>
-          <Link to="/dashboard">Ir al Dashboard</Link>
+          <Link to="/campaigns">Crear una campaña</Link>
         </div>
       ) : (
         <div className="history-actions">

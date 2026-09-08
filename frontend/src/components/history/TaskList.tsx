@@ -24,7 +24,7 @@ export function TaskList() {
         </span>
         <strong>No hay campañas todavía</strong>
         <p>Ejecuta tu primera receta para ver el historial de campañas generadas por la IA.</p>
-        <Link to="/dashboard">Ir al Dashboard →</Link>
+        <Link to="/campaigns">Crear una campaña →</Link>
       </div>
     )
   }

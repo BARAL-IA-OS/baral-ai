@@ -24,11 +24,12 @@ import type {
   ContentItem,
 } from '../types'
 
-export const API_URL =
-  import.meta.env.VITE_API_URL ??
+export const API_URL = (
+  import.meta.env.VITE_API_URL?.trim() ||
   (import.meta.env.PROD
     ? 'https://baral-ai-api.onrender.com'
     : 'http://localhost:8000')
+).replace(/\/+$/, '')
 
 export async function authToken(): Promise<string> {
   const { data } = await supabase.auth.getSession()

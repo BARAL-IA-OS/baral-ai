@@ -4,6 +4,8 @@ import { ArrowLeft, Layers3, RefreshCw, Save, Sparkles } from 'lucide-react'
 import { SocialPreview } from '../components/preview/SocialPreview'
 import type { MockContent } from '../components/preview/ChannelMocks'
 import { getBrandBrain } from '../hooks/useBrandBrain'
+import { getBrandAssets } from '../features/business-dna/api'
+import type { BrandAsset } from '../features/business-dna/types'
 import { getCampaign, parseApiError, regenerateCampaignChannel, updateCampaignChannel } from '../lib/api'
 import type { BrandBrain, ChannelType, ContentItem, CreativeCampaign } from '../types'
 
@@ -12,9 +14,9 @@ const channelLabels: Record<ChannelType, string> = {
 }
 
 function brandIdentity(brand: BrandBrain | null) {
-  const source = brand?.website_url
+  const source = brand?.business_name || (brand?.website_url
     ? brand.website_url.replace(/^https?:\/\//, '').split('.')[0]
-    : brand?.industria || 'Baral'
+    : brand?.industria || 'Tu marca')
   const brandName = source.replace(/[-_]/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
   const compact = brandName.replace(/\s/g, '')
   return {
@@ -38,6 +40,8 @@ export function Studio() {
   const navigate = useNavigate()
   const [campaign, setCampaign] = useState<CreativeCampaign | null>(null)
   const [brand, setBrand] = useState<BrandBrain | null>(null)
+  const [assets, setAssets] = useState<BrandAsset[]>([])
+  const [mediaError, setMediaError] = useState('')
   const [selectedChannel, setSelectedChannel] = useState<ChannelType>('instagram')
   const [instruction, setInstruction] = useState('')
   const [loading, setLoading] = useState(true)
@@ -57,13 +61,26 @@ export function Studio() {
       .finally(() => setLoading(false))
   }, [campaignId])
 
+  useEffect(() => {
+    let active = true
+    getBrandAssets().then((response) => {
+      if (active) setAssets(response.assets)
+    }).catch(() => { if (active) setMediaError('No pudimos cargar las imágenes. Recarga para volver a intentarlo.') })
+    return () => { active = false }
+  }, [])
+
+  const selectedAssets = useMemo(() => (campaign?.selected_assets ?? [])
+    .map((id) => assets.find((asset) => asset.id === id))
+    .filter((asset): asset is BrandAsset => Boolean(asset)), [assets, campaign])
+
   const mockByChannel = useMemo(() => {
     if (!campaign) return {}
     return Object.entries(campaign.content_by_channel).reduce<Partial<Record<ChannelType, MockContent>>>((result, [channel, item]) => {
       result[channel as ChannelType] = toMock(item, brand, campaign.prompt)
+      result[channel as ChannelType]!.imageUrl = selectedAssets[0]?.signed_url || undefined
       return result
     }, {})
-  }, [brand, campaign])
+  }, [brand, campaign, selectedAssets])
 
   async function regenerate() {
     if (!campaignId || regenerating) return
@@ -123,6 +140,7 @@ export function Studio() {
         </div>
       </header>
       {error && <p className="omar-alert error">{error}</p>}
+      {mediaError && <p className="omar-alert error" role="status">{mediaError}</p>}
       <div className="studio-v2-layout">
         <aside className="studio-editor omar-panel">
           <div className="studio-brief-summary">
@@ -146,12 +164,13 @@ export function Studio() {
               {regenerating ? <Sparkles size={16} /> : <RefreshCw size={16} />}{regenerating ? 'Regenerando…' : `Regenerar solo ${channelLabels[selectedChannel]}`}
             </button>
           </div>
-          <div className="studio-resource-row"><span>Recursos</span>{campaign.selected_assets.length ? campaign.selected_assets.map((asset) => <small key={asset}>{asset}</small>) : <small>Sin recursos seleccionados</small>}<button type="button" onClick={() => navigate('/campaigns')}>Cambiar</button></div>
+          <div className="studio-resource-row"><span>Recursos</span>{selectedAssets.length ? selectedAssets.map((asset) => <small key={asset.id}>{asset.title || asset.original_filename}</small>) : <small>Sin imágenes disponibles</small>}</div>
+          {selectedAssets.length > 1 && <p className="omar-footnote">La vista previa usa la primera imagen seleccionada para todos los canales.</p>}
           <p className="omar-footnote">Baral genera y previsualiza. La publicación directa en redes no forma parte de esta fase.</p>
         </aside>
         <main className="studio-preview-v2 omar-panel">
           <div className="preview-title"><span>Vista previa real por canal</span><small>{campaign.status}</small></div>
-          <SocialPreview content={fallback} contentByChannel={mockByChannel} initialChannel={selectedChannel} loading={regenerating} />
+          <SocialPreview key={selectedChannel} content={fallback} contentByChannel={mockByChannel} initialChannel={selectedChannel} loading={regenerating} />
         </main>
       </div>
     </section>
