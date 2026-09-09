@@ -243,6 +243,15 @@ export function generateCampaignContent(
   })
 }
 
+export function generateCampaignImage(
+  campaignId: string,
+  channel?: ChannelType,
+): Promise<{ success: boolean; campaign: CreativeCampaign }> {
+  return request(`/api/campaigns/${campaignId}/image`, {
+    method: 'POST', body: JSON.stringify({ channel }),
+  })
+}
+
 export function regenerateCampaignChannel(
   campaignId: string,
   channel: ChannelType,

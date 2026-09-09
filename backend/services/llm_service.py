@@ -59,13 +59,14 @@ def _extract_json(text: str) -> dict:
 
 @dataclass
 class LLMService:
+    openai_only: bool = False
     _openai: object = field(default=None, init=False)
     _anthropic: object = field(default=None, init=False)
     _deepseek: object = field(default=None, init=False)
 
     def __post_init__(self):
         # DeepSeek es solo para pruebas (compatible con el SDK de OpenAI).
-        if config.DEEPSEEK_API_KEY:
+        if not self.openai_only and config.DEEPSEEK_API_KEY:
             from openai import OpenAI
 
             self._deepseek = OpenAI(api_key=config.DEEPSEEK_API_KEY, base_url=config.DEEPSEEK_BASE_URL)
@@ -73,7 +74,7 @@ class LLMService:
             from openai import OpenAI
 
             self._openai = OpenAI(api_key=config.OPENAI_API_KEY)
-        if config.ANTHROPIC_API_KEY:
+        if not self.openai_only and config.ANTHROPIC_API_KEY:
             import anthropic
 
             self._anthropic = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
@@ -87,7 +88,8 @@ class LLMService:
 
         Orden: DeepSeek (solo pruebas, si esta seteado) -> OpenAI -> Anthropic.
         El plan real es OpenAI primario + Anthropic fallback; DeepSeek solo se
-        antepone cuando su key esta presente para no gastar en pruebas.
+        antepone cuando su key esta presente para no gastar en pruebas. Cuando
+        ``openai_only`` esta activo, usa exclusivamente ``OPENAI_API_KEY``.
         """
         errors = []
 

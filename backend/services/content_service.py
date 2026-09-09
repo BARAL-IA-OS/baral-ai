@@ -65,11 +65,17 @@ def _normalize(channel: str, raw: dict, prompt: str, brand: dict) -> dict:
     return item
 
 
-def generate_content(prompt: str, channels: list[str], brand: dict) -> dict:
+def generate_content(
+    prompt: str,
+    channels: list[str],
+    brand: dict,
+    *,
+    openai_only: bool = False,
+) -> dict:
     """Genera contenido para los canales pedidos. Devuelve items + uso."""
     channels = [c for c in (channels or []) if c in CHANNELS] or CHANNELS
 
-    llm = LLMService()
+    llm = LLMService(openai_only=openai_only)
     tokens = 0
     cost = 0.0
     provider = "stub"

@@ -6,7 +6,7 @@ import type { MockContent } from '../components/preview/ChannelMocks'
 import { getBrandBrain } from '../hooks/useBrandBrain'
 import { getBrandAssets } from '../features/business-dna/api'
 import type { BrandAsset } from '../features/business-dna/types'
-import { getCampaign, parseApiError, regenerateCampaignChannel, updateCampaignChannel } from '../lib/api'
+import { generateCampaignImage, getCampaign, parseApiError, regenerateCampaignChannel, updateCampaignChannel } from '../lib/api'
 import type { BrandBrain, ChannelType, ContentItem, CreativeCampaign } from '../types'
 
 const channelLabels: Record<ChannelType, string> = {
@@ -46,6 +46,7 @@ export function Studio() {
   const [instruction, setInstruction] = useState('')
   const [loading, setLoading] = useState(true)
   const [regenerating, setRegenerating] = useState(false)
+  const [generatingImage, setGeneratingImage] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -73,14 +74,19 @@ export function Studio() {
     .map((id) => assets.find((asset) => asset.id === id))
     .filter((asset): asset is BrandAsset => Boolean(asset)), [assets, campaign])
 
+  const generatedImageUrl = campaign?.generated_image?.url
+    || (campaign?.generated_image?.image_b64
+      ? `data:image/png;base64,${campaign.generated_image.image_b64}`
+      : undefined)
+
   const mockByChannel = useMemo(() => {
     if (!campaign) return {}
     return Object.entries(campaign.content_by_channel).reduce<Partial<Record<ChannelType, MockContent>>>((result, [channel, item]) => {
       result[channel as ChannelType] = toMock(item, brand, campaign.prompt)
-      result[channel as ChannelType]!.imageUrl = selectedAssets[0]?.signed_url || undefined
+      result[channel as ChannelType]!.imageUrl = selectedAssets[0]?.signed_url || generatedImageUrl
       return result
     }, {})
-  }, [brand, campaign, selectedAssets])
+  }, [brand, campaign, generatedImageUrl, selectedAssets])
 
   async function regenerate() {
     if (!campaignId || regenerating) return
@@ -125,6 +131,20 @@ export function Studio() {
     }
   }
 
+  async function generateVisual() {
+    if (!campaignId || generatingImage) return
+    setGeneratingImage(true)
+    setError('')
+    try {
+      const response = await generateCampaignImage(campaignId, selectedChannel)
+      setCampaign(response.campaign)
+    } catch (reason) {
+      setError(parseApiError(reason))
+    } finally {
+      setGeneratingImage(false)
+    }
+  }
+
   if (!campaignId) return <Navigate to="/campaigns" replace />
   if (loading) return <section className="page omar-page"><p className="omar-loading">Abriendo el Estudio…</p></section>
   if (!campaign) return <section className="page omar-page"><p className="omar-alert error">{error || 'No se encontró la campaña.'}</p></section>
@@ -135,9 +155,6 @@ export function Studio() {
       <header className="studio-v2-header">
         <button type="button" className="icon-button" onClick={() => navigate('/campaigns')} aria-label="Volver a campañas"><ArrowLeft size={18} /></button>
         <div><span className="omar-eyebrow"><Layers3 size={14} /> Estudio de campaña</span><h1>{campaign.name}</h1></div>
-        <div className="studio-meta">
-          <span>{campaign.provider || 'Sin proveedor'}</span><span>${Number(campaign.cost_usd || 0).toFixed(4)}</span><span>v{Math.max(campaign.versions?.length || 1, 1)}</span>
-        </div>
       </header>
       {error && <p className="omar-alert error">{error}</p>}
       {mediaError && <p className="omar-alert error" role="status">{mediaError}</p>}
@@ -164,7 +181,13 @@ export function Studio() {
               {regenerating ? <Sparkles size={16} /> : <RefreshCw size={16} />}{regenerating ? 'Regenerando…' : `Regenerar solo ${channelLabels[selectedChannel]}`}
             </button>
           </div>
-          <div className="studio-resource-row"><span>Recursos</span>{selectedAssets.length ? selectedAssets.map((asset) => <small key={asset.id}>{asset.title || asset.original_filename}</small>) : <small>Sin imágenes disponibles</small>}</div>
+          <div className="studio-resource-row">
+            <span>Recursos</span>
+            {selectedAssets.length ? selectedAssets.map((asset) => <small key={asset.id}>{asset.title || asset.original_filename}</small>) : <small>{generatedImageUrl ? 'Imagen generada con OpenAI' : 'Sin imágenes disponibles'}</small>}
+            <button type="button" className="button button-secondary" onClick={() => void generateVisual()} disabled={generatingImage}>
+              <Sparkles size={15} />{generatingImage ? 'Generando imagen…' : generatedImageUrl ? 'Regenerar imagen' : 'Generar imagen'}
+            </button>
+          </div>
           {selectedAssets.length > 1 && <p className="omar-footnote">La vista previa usa la primera imagen seleccionada para todos los canales.</p>}
           <p className="omar-footnote">Baral genera y previsualiza. La publicación directa en redes no forma parte de esta fase.</p>
         </aside>

@@ -57,6 +57,91 @@ def _campaign(user_id: str, campaign_id: str) -> dict[str, Any]:
     return result.data[0]
 
 
+def _public_generated_image(asset: dict[str, Any]) -> dict[str, Any]:
+    """Return a campaign image with a fresh signed URL when it lives in Storage."""
+    image_url = asset.get("url")
+    storage_path = asset.get("storage_path")
+    if storage_path:
+        try:
+            signed = (
+                get_supabase().storage.from_("content-images")
+                .create_signed_url(storage_path, 3600)
+            )
+            image_url = signed.get("signedURL") or signed.get("signedUrl") or image_url
+        except Exception:
+            pass
+    return {
+        "id": asset.get("id"),
+        "url": image_url,
+        "image_b64": asset.get("image_b64"),
+        "storage_path": storage_path,
+        "prompt": asset.get("prompt", ""),
+    }
+
+
+def _campaign_with_image(user_id: str, campaign: dict[str, Any]) -> dict[str, Any]:
+    """Attach the most recent generated campaign image to an API response."""
+    try:
+        result = (
+            get_supabase().table("generated_assets").select("*")
+            .eq("campaign_id", campaign["id"]).eq("user_id", user_id)
+            .eq("kind", "campaign").order("created_at", desc=True).limit(1).execute()
+        )
+    except Exception:
+        result = None
+    image = _public_generated_image(result.data[0]) if result and result.data else None
+    return {**campaign, "generated_image": image}
+
+
+def _generate_campaign_image(
+    user_id: str,
+    campaign_id: str,
+    campaign_name: str,
+    brief: dict[str, Any],
+    brand: dict[str, Any],
+    media_prompt: str,
+) -> tuple[dict[str, Any], float, int, str]:
+    """Generate and persist one visual shared by all campaign previews."""
+    prompt = (
+        f"Crea una imagen publicitaria profesional para la campana '{campaign_name}'. "
+        f"Concepto visual: {media_prompt}. Producto o servicio: {brief.get('product', '')}. "
+        f"Audiencia: {brief.get('audience', '')}. Tono de marca: {brand.get('tono', '')}. "
+        f"Formato solicitado: {brief.get('format', '1:1')}. "
+        "Composicion limpia, atractiva y lista para redes sociales. No incluyas texto, "
+        "logotipos inventados, marcas de agua ni elementos que contradigan las restricciones. "
+        f"Restricciones: {brief.get('restrictions', '')}."
+    )
+    image = generate_image(prompt, user_id=user_id)
+    if not image.image_url and not image.b64:
+        raise HTTPException(
+            status_code=503,
+            detail=image.error or "OpenAI no pudo generar la imagen de la campana",
+        )
+    asset = {
+        "id": str(uuid4()),
+        "user_id": user_id,
+        "campaign_id": campaign_id,
+        "kind": "campaign",
+        "name": f"Imagen de {campaign_name}",
+        "storage_path": image.storage_path,
+        "url": image.image_url,
+        "image_b64": image.b64,
+        "prompt": prompt,
+        "metadata": {"format": brief.get("format", "1:1")},
+        "status": "GENERATED",
+        "provider": image.provider,
+        "cost_usd": image.cost_usd,
+        "tokens_used": image.tokens,
+        "created_at": _now(),
+    }
+    try:
+        stored = get_supabase().table("generated_assets").insert(asset).execute()
+    except Exception as exc:
+        raise _db_error(exc) from exc
+    saved = stored.data[0] if stored.data else asset
+    return _public_generated_image(saved), image.cost_usd, image.tokens, image.provider
+
+
 def _resource_ids(user_id: str, resource_ids: list[str]) -> list[str]:
     """Validate owned images and retain IDs, not expiring signed URLs."""
     ids = list(dict.fromkeys(resource_ids))
@@ -108,6 +193,10 @@ class UpdateBriefRequest(BaseModel):
 class GenerateCampaignRequest(BaseModel):
     brief: CampaignBrief | None = None
     idempotency_key: str | None = None
+
+
+class GenerateCampaignImageRequest(BaseModel):
+    channel: str | None = None
 
 
 class RegenerateChannelRequest(BaseModel):
@@ -212,7 +301,7 @@ async def list_campaigns(user: CurrentUser = Depends(get_current_user)):
 
 @router.get("/campaigns/{campaign_id}")
 async def get_campaign(campaign_id: str, user: CurrentUser = Depends(get_current_user)):
-    return {"campaign": _campaign(user.id, campaign_id)}
+    return {"campaign": _campaign_with_image(user.id, _campaign(user.id, campaign_id))}
 
 
 @router.post("/campaigns/{campaign_id}/generate")
@@ -228,7 +317,7 @@ async def generate_campaign_content(
         and campaign.get("last_generation_key") == request.idempotency_key
         and campaign.get("status") == "READY"
     ):
-        return {"success": True, "campaign": campaign}
+        return {"success": True, "campaign": _campaign_with_image(user.id, campaign)}
     brand = _brand_for(user.id)
     brief = request.brief.model_dump() if request.brief else campaign.get("brief", {})
     brief["resources"] = _resource_ids(user.id, brief.get("resources", []))
@@ -242,8 +331,20 @@ async def generate_campaign_content(
             ("Tono", "tone"), ("Formato", "format"), ("Restricciones", "restrictions"),
         )
     )
-    result = generate_content(prompt, channels, brand)
+    result = generate_content(prompt, channels, brand, openai_only=True)
     by_channel = {item["channel"]: item for item in result["items"]}
+    media_prompt = next(
+        (item.get("media_alt", "") for item in result["items"] if item.get("media_alt")),
+        brief.get("objective", campaign.get("prompt", "")),
+    )
+    generated_image, image_cost, image_tokens, image_provider = _generate_campaign_image(
+        user.id,
+        campaign_id,
+        campaign.get("name", "Campana"),
+        brief,
+        brand,
+        media_prompt,
+    )
     versions = campaign.get("versions") or []
     versions.append({"number": len(versions) + 1, "created_at": _now(), "content": by_channel})
     update = {
@@ -253,8 +354,8 @@ async def generate_campaign_content(
         "channels": channels,
         "content_by_channel": by_channel,
         "versions": versions[-20:],
-        "tokens_used": (campaign.get("tokens_used") or 0) + result["tokens_used"],
-        "cost_usd": round((campaign.get("cost_usd") or 0) + result["cost_usd"], 6),
+        "tokens_used": (campaign.get("tokens_used") or 0) + result["tokens_used"] + image_tokens,
+        "cost_usd": round((campaign.get("cost_usd") or 0) + result["cost_usd"] + image_cost, 6),
         "provider": result["provider"],
         "last_generation_key": request.idempotency_key,
         "updated_at": _now(),
@@ -264,7 +365,43 @@ async def generate_campaign_content(
         .eq("id", campaign_id).eq("user_id", user.id).execute()
     )
     log_usage(user.id, "campaign", result["provider"], result["cost_usd"], result["tokens_used"])
-    return {"success": True, "campaign": saved.data[0]}
+    log_usage(user.id, "campaign-image", image_provider, image_cost, image_tokens)
+    return {"success": True, "campaign": {**saved.data[0], "generated_image": generated_image}}
+
+
+@router.post("/campaigns/{campaign_id}/image")
+async def generate_campaign_image(
+    campaign_id: str,
+    request: GenerateCampaignImageRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Generate or replace the visual used by an existing campaign preview."""
+    campaign = _campaign(user.id, campaign_id)
+    brand = _brand_for(user.id)
+    enforce_rate_limit(user.id, "generacion de imagen de campana", 6, 300)
+    content = campaign.get("content_by_channel") or {}
+    channel = request.channel if request.channel in CHANNELS else None
+    item = content.get(channel, {}) if channel else next(iter(content.values()), {})
+    media_prompt = item.get("media_alt") or campaign.get("prompt", "")
+    generated_image, image_cost, image_tokens, image_provider = _generate_campaign_image(
+        user.id,
+        campaign_id,
+        campaign.get("name", "Campana"),
+        campaign.get("brief") or {},
+        brand,
+        media_prompt,
+    )
+    update = {
+        "tokens_used": (campaign.get("tokens_used") or 0) + image_tokens,
+        "cost_usd": round((campaign.get("cost_usd") or 0) + image_cost, 6),
+        "updated_at": _now(),
+    }
+    saved = (
+        get_supabase().table("creative_campaigns").update(update)
+        .eq("id", campaign_id).eq("user_id", user.id).execute()
+    )
+    log_usage(user.id, "campaign-image", image_provider, image_cost, image_tokens)
+    return {"success": True, "campaign": {**saved.data[0], "generated_image": generated_image}}
 
 
 @router.post("/campaigns/{campaign_id}/channels/{channel}/regenerate")
@@ -282,11 +419,11 @@ async def regenerate_campaign_channel(
         version.get("idempotency_key") == request.idempotency_key
         for version in (campaign.get("versions") or [])
     ):
-        return {"success": True, "campaign": campaign}
+        return {"success": True, "campaign": _campaign_with_image(user.id, campaign)}
     brand = _brand_for(user.id)
     brief = campaign.get("brief", {})
     prompt = f"{brief.get('objective', campaign.get('prompt', ''))}\nAjuste: {request.instruction}".strip()
-    result = generate_content(prompt, [channel], brand)
+    result = generate_content(prompt, [channel], brand, openai_only=True)
     content = campaign.get("content_by_channel") or {}
     content[channel] = result["items"][0]
     versions = campaign.get("versions") or []
@@ -304,7 +441,7 @@ async def regenerate_campaign_channel(
         .eq("id", campaign_id).eq("user_id", user.id).execute()
     )
     log_usage(user.id, "campaign-channel", result["provider"], result["cost_usd"], result["tokens_used"])
-    return {"success": True, "campaign": saved.data[0]}
+    return {"success": True, "campaign": _campaign_with_image(user.id, saved.data[0])}
 
 
 @router.patch("/campaigns/{campaign_id}/channels/{channel}")
@@ -334,7 +471,7 @@ async def update_campaign_channel(
         .update({"content_by_channel": content, "versions": versions[-20:], "updated_at": _now()})
         .eq("id", campaign_id).eq("user_id", user.id).execute()
     )
-    return {"success": True, "campaign": saved.data[0]}
+    return {"success": True, "campaign": _campaign_with_image(user.id, saved.data[0])}
 
 
 class PhotoshootRequest(BaseModel):

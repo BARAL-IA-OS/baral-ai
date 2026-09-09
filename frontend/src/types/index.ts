@@ -247,6 +247,13 @@ export interface CreativeCampaign {
   tokens_used: number
   cost_usd: number
   provider?: string
+  generated_image?: {
+    id?: string
+    url?: string | null
+    image_b64?: string | null
+    storage_path?: string | null
+    prompt?: string
+  } | null
   created_at: string
   updated_at: string
 }
