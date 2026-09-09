@@ -103,13 +103,13 @@ export function Campaigns() {
     const offer = brand?.propuesta || 'tu producto o servicio principal'
     const target = brand?.audiencia || 'tu audiencia ideal'
     return [
-      { title: 'Presenta tu próximo favorito', label: 'Lanzamiento', headline: 'Algo nuevo. Muy tuyo.', style: 'launch',
+      { title: 'Presenta tu próximo favorito', label: 'Lanzamiento', headline: 'Algo nuevo Muy tuyo', style: 'launch',
         description: 'Dale a tu producto una entrada que se recuerde.',
         prompt: `Presenta ${offer} a ${target} con una propuesta clara y cercana.` },
-      { title: 'Haz que conozcan tu esencia', label: 'Tu marca', headline: 'Lo que te hace único.', style: 'brand',
+      { title: 'Haz que conozcan tu esencia', label: 'Tu marca', headline: 'Lo que te hace único', style: 'brand',
         description: 'Cuenta tu historia y conecta con las personas correctas.',
         prompt: `Crea una campaña de confianza que destaque ${brand?.diferenciador || 'el diferencial del negocio'}.` },
-      { title: 'Vuelve a conectar', label: 'Reactivación', headline: 'Mucho más por compartir.', style: 'connect',
+      { title: 'Vuelve a conectar', label: 'Reactivación', headline: 'Mucho más por compartir', style: 'connect',
         description: 'Una buena razón para que tus clientes vuelvan.',
         prompt: 'Reactiva clientes con una oferta relevante y un llamado a la acción directo.' },
     ]
@@ -225,7 +225,7 @@ export function Campaigns() {
     <section className="page omar-page campaigns-page">
       <header className="campaign-welcome">
         <span className="campaign-kicker"><span /> TU PRÓXIMA GRAN IDEA EMPIEZA AQUÍ</span>
-        <h1>Hagamos crecer <em>tu negocio.</em></h1>
+        <h1>Hagamos crecer <em>tu negocio</em></h1>
         <p>Una idea. Tu marca. Una campaña lista para tomar forma.</p>
       </header>
       <div className="campaign-composer omar-panel" aria-busy={loading || uploading}>
