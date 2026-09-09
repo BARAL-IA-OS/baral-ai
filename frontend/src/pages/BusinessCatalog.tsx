@@ -22,6 +22,13 @@ const emptyItem: CatalogItemInput = {
   currency: 'BOB', cta: '', featured: false,
 }
 
+const importSteps = [
+  { label: 'Conectar', threshold: 8 },
+  { label: 'Leer la web', threshold: 24 },
+  { label: 'Detectar oferta', threshold: 70 },
+  { label: 'Preparar revisión', threshold: 94 },
+]
+
 export function BusinessCatalog() {
   const [items, setItems] = useState<CatalogItem[]>([])
   const [assets, setAssets] = useState<BrandAsset[]>([])
@@ -32,6 +39,7 @@ export function BusinessCatalog() {
   const [showUrlImport, setShowUrlImport] = useState(false)
   const [importUrl, setImportUrl] = useState('')
   const [importJob, setImportJob] = useState<ExtractionJob | null>(null)
+  const [startingImport, setStartingImport] = useState(false)
   const [draft, setDraft] = useState<CatalogItemInput>(emptyItem)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -116,7 +124,8 @@ export function BusinessCatalog() {
 
   async function startUrlImport() {
     setError(null)
-    try { setImportJob((await startBusinessExtraction(importUrl)).job) } catch (reason) { setError(parseApiError(reason)) }
+    setStartingImport(true)
+    try { setImportJob((await startBusinessExtraction(importUrl)).job) } catch (reason) { setError(parseApiError(reason)) } finally { setStartingImport(false) }
   }
 
   async function importDetected() {
@@ -138,6 +147,10 @@ export function BusinessCatalog() {
     setSaving(true); setError(null)
     try { await uploadBrandAssets(Array.from(files), 'product', editing.id); await load() } catch (reason) { setError(parseApiError(reason)) } finally { setSaving(false) }
   }
+
+  const importInProgress = startingImport || Boolean(importJob && !importJob.result && importJob.status !== 'failed')
+  const importProgress = importJob?.progress ?? 4
+  const importStage = importJob?.stage_label || 'Conectando con la página'
 
   return (
     <section className="page catalog-page catalog-gallery-page">
@@ -191,10 +204,17 @@ export function BusinessCatalog() {
           <div className="drawer-actions"><button type="button" className="button button-secondary" onClick={() => setEditing(null)}>Cancelar</button><button type="button" className="button button-primary" disabled={saving} onClick={() => void save()}>{saving ? 'Guardando…' : 'Guardar'}</button></div>
         </div>
       </Drawer>
-      <Drawer open={showUrlImport} title="Agregar catálogo desde una web" onClose={() => { setShowUrlImport(false); setImportJob(null) }}>
-        <div className="drawer-form catalog-url-import">
-          {!importJob && <><InputField label="URL del catálogo o sitio" type="url" value={importUrl} onChange={(event) => setImportUrl(event.target.value)} placeholder="https://tuempresa.com/catalogo" /><button type="button" className="button button-primary" disabled={!importUrl.trim()} onClick={() => void startUrlImport()}><Sparkles size={16} /> Analizar</button></>}
-          {importJob && !importJob.result && importJob.status !== 'failed' && <div className="catalog-import-progress"><Loader2 size={24} className="spin" /><strong>{importJob.stage_label}</strong><span>{importJob.progress}%</span><div className="progress-track"><span style={{ width: `${importJob.progress}%` }} /></div></div>}
+      <Drawer open={showUrlImport} title="Agregar catálogo desde una web" variant="modal" onClose={() => { setShowUrlImport(false); setImportJob(null) }}>
+        <div className={`drawer-form catalog-url-import${importInProgress ? ' is-loading' : ''}`}>
+          {!importJob && !startingImport && <><InputField label="URL del catálogo o sitio" type="url" value={importUrl} onChange={(event) => setImportUrl(event.target.value)} placeholder="https://tuempresa.com/catalogo" /><button type="button" className="button button-primary" disabled={!importUrl.trim()} onClick={() => void startUrlImport()}><Sparkles size={16} /> Analizar</button></>}
+          {importInProgress && <div className="catalog-import-progress" role="status" aria-live="polite" aria-label={`${importStage}, ${importProgress}% completado`}>
+            <div className="catalog-import-spinner"><Loader2 size={30} className="spin" /></div>
+            <div className="catalog-import-copy"><span>ANALIZANDO TU CATÁLOGO</span><strong>{importStage}</strong><p>Estamos recorriendo el sitio y organizando sus productos y servicios.</p></div>
+            <div className="catalog-import-percentage"><strong>{importProgress}%</strong><span>completado</span></div>
+            <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={importProgress}><span style={{ width: `${importProgress}%` }} /></div>
+            <div className="catalog-import-steps" aria-hidden="true">{importSteps.map((step) => <span className={importProgress >= step.threshold ? 'is-done' : ''} key={step.label}><i />{step.label}</span>)}</div>
+            <small>Esto suele tardar unos segundos. Puedes dejar esta ventana abierta.</small>
+          </div>}
           {importJob?.status === 'failed' && <div className="error-banner">{importJob.error || 'No se pudo analizar el sitio.'}</div>}
           {importJob?.result && <><p className="drawer-helper">Revisa y corrige los elementos detectados antes de importarlos.</p>{importJob.result.catalogItems.length === 0 && <div className="empty-state"><strong>No se detectaron productos estructurados</strong><p>Prueba con la URL directa del catálogo o agrégalos desde cero.</p></div>}<div className="detected-catalog-list">{importJob.result.catalogItems.map((item, index) => <div className="detected-item" key={`${index}-${item.source_url}`}><select value={item.kind || 'product'} onChange={(event) => setImportJob((current) => { if (!current?.result) return current; const catalogItems = [...current.result.catalogItems]; catalogItems[index] = { ...catalogItems[index], kind: event.target.value as 'product' | 'service' }; return { ...current, result: { ...current.result, catalogItems } } })}><option value="product">Producto</option><option value="service">Servicio</option></select><input value={item.name || ''} onChange={(event) => setImportJob((current) => { if (!current?.result) return current; const catalogItems = [...current.result.catalogItems]; catalogItems[index] = { ...catalogItems[index], name: event.target.value }; return { ...current, result: { ...current.result, catalogItems } } })} /></div>)}</div>{importJob.result.catalogItems.length > 0 && <button type="button" className="button button-primary" disabled={saving} onClick={() => void importDetected()}>{saving ? 'Importando…' : `Importar ${importJob.result.catalogItems.length} elementos`}</button>}</>}
         </div>
