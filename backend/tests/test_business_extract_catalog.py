@@ -4,11 +4,20 @@ from services.business_extract_service import (
     _candidate_page_links,
     _html_catalog,
     _jsonld_catalog,
+    _palette_from_styles,
     _page_data,
 )
 
 
 class BusinessCatalogExtractionTests(unittest.TestCase):
+    def test_extracts_and_normalises_css_brand_palette(self):
+        palette = _palette_from_styles([
+            ".brand { color: #abc; background: rgb(44, 255, 192); } "
+            ":root { --e-global-color-primary: #171626; --brand-accent: #722BF5; }",
+        ])
+
+        self.assertEqual(palette[:4], ["#171626", "#722BF5", "#AABBCC", "#2CFFC0"])
+
     def test_discovers_offer_page_from_link_text_when_url_is_opaque(self):
         page = _page_data(
             "https://example.com/",

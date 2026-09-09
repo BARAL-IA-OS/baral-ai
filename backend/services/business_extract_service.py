@@ -32,6 +32,11 @@ SOCIAL_HOSTS = {
     "x.com": "x",
     "twitter.com": "x",
 }
+_HEX_COLOR_RE = re.compile(r"(?<![0-9a-fA-F])#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![0-9a-fA-F])")
+_RGB_COLOR_RE = re.compile(
+    r"rgba?\(\s*([0-9]{1,3})\s*[, ]\s*([0-9]{1,3})\s*[, ]\s*([0-9]{1,3})",
+    re.I,
+)
 
 
 def _now() -> str:
@@ -41,6 +46,50 @@ def _now() -> str:
 def _plain(value: object) -> str:
     text = unicodedata.normalize("NFKD", str(value or ""))
     return "".join(char for char in text if not unicodedata.combining(char)).lower()
+
+
+def _normalise_color(value: str) -> str | None:
+    value = (value or "").strip()
+    if value.startswith("#"):
+        hex_value = value[1:]
+        if len(hex_value) in {3, 4}:
+            hex_value = "".join(char * 2 for char in hex_value[:3])
+        elif len(hex_value) in {6, 8}:
+            hex_value = hex_value[:6]
+        else:
+            return None
+        return f"#{hex_value.upper()}"
+    return None
+
+
+def _colors_in_text(value: str) -> list[str]:
+    colors: list[str] = []
+    for match in _HEX_COLOR_RE.finditer(value or ""):
+        color = _normalise_color(f"#{match.group(1)}")
+        if color:
+            colors.append(color)
+    for match in _RGB_COLOR_RE.finditer(value or ""):
+        channels = [int(channel) for channel in match.groups()]
+        if all(0 <= channel <= 255 for channel in channels):
+            colors.append("#" + "".join(f"{channel:02X}" for channel in channels))
+    return colors
+
+
+def _palette_from_styles(styles: list[str]) -> list[str]:
+    """Extract a stable palette, prioritising declared brand colour variables."""
+    prioritized: list[str] = []
+    all_colors: list[str] = []
+    variable_re = re.compile(
+        r"--[\w-]*(?:color|primary|secondary|accent|brand)[\w-]*\s*:\s*([^;}]+)",
+        re.I,
+    )
+    for style in styles:
+        prioritized.extend(
+            color for match in variable_re.finditer(style or "")
+            for color in _colors_in_text(match.group(1))
+        )
+        all_colors.extend(_colors_in_text(style or ""))
+    return list(dict.fromkeys([*prioritized, *all_colors]))[:8]
 
 
 def _update_job(job_id: str, user_id: str, stage: int, progress: int, label: str, **extra) -> None:
@@ -76,6 +125,12 @@ def _page_data(url: str, html: str) -> dict:
         for anchor in soup.find_all("a", href=True)
     ]
     links = [record["url"] for record in link_records]
+    stylesheet_urls = [
+        urljoin(url, str(link.get("href", "")))
+        for link in soup.find_all("link", href=True)
+        if "stylesheet" in {str(value).lower() for value in (link.get("rel") or [])}
+    ]
+    inline_styles = [style.get_text(" ", strip=True) for style in soup.find_all("style")]
     images: list[str] = []
     for selector in (
         soup.find("meta", attrs={"property": "og:image"}),
@@ -87,7 +142,7 @@ def _page_data(url: str, html: str) -> dict:
                 images.append(urljoin(url, str(source)))
     text = " ".join(soup.get_text(" ", strip=True).split())
     html_without_scripts = str(soup)
-    colors = list(dict.fromkeys(re.findall(r"#[0-9a-fA-F]{6}\b", html_without_scripts)))[:8]
+    colors = _palette_from_styles([html_without_scripts, *inline_styles])
     fonts = list(dict.fromkeys(re.findall(r"font-family\s*:\s*['\"]?([^;'\"}]+)", html_without_scripts, re.I)))[:5]
     emails = list(dict.fromkeys(re.findall(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", text)))[:5]
     phones = list(dict.fromkeys(re.findall(r"(?:\+?\d[\d\s().-]{7,}\d)", text)))[:5]
@@ -104,6 +159,8 @@ def _page_data(url: str, html: str) -> dict:
         "description": description,
         "links": links,
         "link_records": link_records,
+        "stylesheet_urls": list(dict.fromkeys(stylesheet_urls)),
+        "inline_styles": inline_styles,
         "images": list(dict.fromkeys(images)),
         "colors": colors,
         "fonts": fonts,
@@ -131,6 +188,41 @@ def _candidate_page_links(home: dict) -> list[str]:
         if any(word in signal for word in IMPORTANT_LINK_WORDS):
             candidates.append(normalized_link)
     return list(dict.fromkeys(candidates))[:8]
+
+
+def _stylesheet_priority(url: str) -> int:
+    plain = _plain(url)
+    if "elementor/css/post-" in plain:
+        return 0
+    if any(word in plain for word in ("custom", "theme", "style", "main.css")):
+        return 1
+    if any(word in plain for word in ("font", "animation", "icon", "widget")):
+        return 3
+    return 2
+
+
+def _palette_from_pages(pages: list[dict]) -> list[str]:
+    """Read a small, safe set of public CSS files in addition to the HTML."""
+    external_styles: list[str] = []
+    stylesheet_urls = list(dict.fromkeys(
+        url for page in pages for url in page.get("stylesheet_urls", [])
+    ))
+    for url in sorted(stylesheet_urls, key=_stylesheet_priority)[:6]:
+        try:
+            _, body, _ = safe_get(
+                url,
+                max_bytes=512 * 1024,
+                allowed_content_prefixes=("text/css", "text/plain"),
+            )
+            external_styles.append(body.decode("utf-8", errors="replace"))
+        except Exception:
+            continue
+    styles = [
+        *external_styles,
+        *(style for page in pages for style in page.get("inline_styles", [])),
+        *(" ".join(page.get("colors", [])) for page in pages),
+    ]
+    return _palette_from_styles(styles)
 
 
 def _jsonld_catalog(pages: list[dict]) -> list[dict]:
@@ -428,7 +520,7 @@ def run_business_extraction(job_id: str, user_id: str, source_url: str) -> None:
         _update_job(job_id, user_id, 4, 58, "Buscando logo, colores y tipografias")
         details = _jsonld_details(pages)
         images = list(dict.fromkeys([*(value for page in pages for value in page["images"]), *details["images"]]))[:10]
-        colors = list(dict.fromkeys(value for page in pages for value in page["colors"]))[:8]
+        colors = _palette_from_pages(pages)
         fonts = list(dict.fromkeys(value for page in pages for value in page["fonts"]))[:5]
 
         _update_job(job_id, user_id, 5, 70, "Detectando contacto, ubicacion y redes")
